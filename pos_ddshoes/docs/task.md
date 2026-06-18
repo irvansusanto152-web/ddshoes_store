@@ -328,7 +328,25 @@
   - [x] URL Kasir tidak bisa diakses tanpa login
   - [x] CSRF terlindungi di semua AJAX POST
 
-- [x] **Finalisasi:**
+---
+
+## FASE 6.1 — Perbaikan Workflow Stock In (Inline Create)
+
+- [x] **Fix Bug:**
+  - [x] Edit `core/views.py` di fungsi `stockin_save` dan `stockin_list` (atau tempat query Select2 produk berada)
+  - [x] Pastikan dropdown produk menampilkan SEMUA produk (termasuk status `inactive`), jangan difilter hanya `status='active'`.
+- [x] **Inline Product Creation:**
+  - [x] Edit `templates/stockin_form.html` (form Barang Masuk)
+  - [x] Tambahkan tombol "Produk Baru" di sebelah dropdown Pilih Produk.
+  - [x] Buat modal form kecil (bisa memanggil `uni_modal` produk form, atau modal custom khusus stock in) untuk menambah produk baru secara instan tanpa harus pindah halaman.
+  - [x] Setelah sukses simpan via AJAX, produk baru otomatis terpilih di dropdown baris tersebut.
+- [x] **Testing:**
+  - [x] Tes restock produk yang stoknya habis (`inactive`).
+  - [x] Tes buat produk baru langsung dari form Stock In, pastikan stok bertambah dan muncul di katalog.
+
+---
+
+## Finalisasi
   - [x] Seed data awal (management command `seed_data`)
   - [x] Review & cleanup kode
   - [x] Pastikan semua `migrations` ter-commit
@@ -347,6 +365,7 @@
 | Fase 4 — Halaman Kasir | `[x]` | Selesai |
 | Fase 5 — Fitur Pendukung | `[x]` | Selesai |
 | Fase 6 — Testing & Finalisasi | `[x]` | Selesai |
+| Fase 6.1 — Perbaikan Workflow | `[x]` | Selesai |
 
 ---
 

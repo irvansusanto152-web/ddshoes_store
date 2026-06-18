@@ -266,7 +266,7 @@ def products_save(request):
                 p.image = image
                 p.save()
             messages.success(request, "Produk berhasil ditambahkan.")
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'id': p.id, 'name': p.name})
     
     id = request.GET.get('id', '')
     product = Products.objects.get(id=id) if id else None
@@ -274,11 +274,13 @@ def products_save(request):
     brands = Brands.objects.all()
     conditions = Products.CONDITION_CHOICES
     
+    inline = request.GET.get('inline', '0')
     context = {
         'product': product,
         'categories': categories,
         'brands': brands,
         'conditions': conditions,
+        'inline': inline,
     }
     return render(request, 'products_form.html', context)
 
@@ -373,7 +375,7 @@ def stockin_save(request):
         return redirect('stockin_list')
 
     suppliers = Suppliers.objects.all().order_by('name')
-    products = Products.objects.filter(status='active').select_related('brand', 'category').order_by('name')
+    products = Products.objects.select_related('brand', 'category').order_by('name')
     return render(request, 'stockin_form.html', {'suppliers': suppliers, 'products': products})
 
 # --- USERS ---

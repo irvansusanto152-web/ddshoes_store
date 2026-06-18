@@ -52,12 +52,19 @@
                             <!-- Baris pertama -->
                             <tr>
                                 <td>
-                                    <select name="product_id[]" class="form-select select2-item" required>
-                                        <option value="" disabled selected>Pilih Produk...</option>
-                                        {% for p in products %}
-                                        <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
-                                        {% endfor %}
-                                    </select>
+                                    <div class="d-flex gap-1">
+                                        <div class="flex-grow-1">
+                                            <select name="product_id[]" class="form-select select2-item" required style="width: 100%;">
+                                                <option value="" disabled selected>Pilih Produk...</option>
+                                                {% for p in products %}
+                                                <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-success btn-sm px-2" onclick="openInlineProductForm(this)" title="Produk Baru" style="height: 38px;">
+                                            <i class="material-icons" style="font-size: 18px; line-height: 1;">add</i>
+                                        </button>
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="number" name="buy_price[]" class="form-control" placeholder="Harga Beli (opsional)">
@@ -88,12 +95,19 @@
 <table id="clone-row" style="display:none;">
     <tr>
         <td>
-            <select name="product_id[]" class="form-select clone-select2" required>
-                <option value="" disabled selected>Pilih Produk...</option>
-                {% for p in products %}
-                <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
-                {% endfor %}
-            </select>
+            <div class="d-flex gap-1">
+                <div class="flex-grow-1">
+                    <select name="product_id[]" class="form-select clone-select2" required style="width: 100%;">
+                        <option value="" disabled selected>Pilih Produk...</option>
+                        {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="button" class="btn btn-outline-success btn-sm px-2" onclick="openInlineProductForm(this)" title="Produk Baru" style="height: 38px;">
+                    <i class="material-icons" style="font-size: 18px; line-height: 1;">add</i>
+                </button>
+            </div>
         </td>
         <td>
             <input type="number" name="buy_price[]" class="form-control" placeholder="Harga Beli (opsional)">
@@ -128,5 +142,20 @@
             }
         });
     });
+
+    let currentSelectElement = null;
+
+    function openInlineProductForm(btnElement) {
+        currentSelectElement = $(btnElement).closest('td').find('select');
+        window.uni_modal('Tambah Produk Baru', '{% url "products_save" %}?inline=1', 'modal-lg');
+    }
+
+    window.onInlineProductCreated = function(productId, productName) {
+        if (currentSelectElement) {
+            var newOption = new Option(productName, productId, false, true);
+            currentSelectElement.append(newOption).trigger('change');
+            currentSelectElement = null;
+        }
+    };
 </script>
 {% endblock %}

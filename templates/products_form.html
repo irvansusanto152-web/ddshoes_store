@@ -117,7 +117,17 @@
                 type: 'POST',
                 success: function(resp) {
                     if (resp.status == 'success') {
-                        location.reload();
+                        {% if inline == '1' %}
+                            if (typeof window.onInlineProductCreated === 'function') {
+                                window.onInlineProductCreated(resp.id, resp.name);
+                            }
+                            $('#uni_modal').modal('hide');
+                            end_loader();
+                            // Optional alert
+                            alert('Produk berhasil ditambahkan!');
+                        {% else %}
+                            location.reload();
+                        {% endif %}
                     } else {
                         alert("Terjadi kesalahan saat menyimpan data.");
                         end_loader();

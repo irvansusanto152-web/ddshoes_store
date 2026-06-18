@@ -14,11 +14,11 @@ DD Shoes Store adalah toko ritel sepatu bekas (*second*). Karena produk yang dij
         │
         ▼
 [Pencatatan Barang Masuk (Stock In)]
-  → Nama Produk, Merek, Ukuran, Kondisi, Harga Beli
+  → Admin memilih produk yang sudah ada (termasuk inactive) ATAU langsung membuat produk baru secara inline (Nama, Merek, Kategori, Ukuran, Kondisi, Harga Beli, Harga Jual default).
         │
         ▼
 [Katalog Produk (Inventory Aktif)]
-  → Barang tersedia & siap dijual, Harga Jual ditentukan Admin
+  → Produk yang didaftarkan via Barang Masuk otomatis masuk katalog dengan stok terupdate. Harga Jual dapat disesuaikan kemudian.
         │
         ▼
 [Transaksi POS (Kasir)]
@@ -62,7 +62,7 @@ DD Shoes Store adalah toko ritel sepatu bekas (*second*). Karena produk yang dij
 | **Master: Kategori** | Tabel daftar kategori. CRUD: Tambah, Ubah, Hapus kategori. *Contoh: Sneakers, Formal, Sandal, Boots* |
 | **Master: Pemasok (Suppliers)** | Tabel daftar pemasok/sumber barang. CRUD: Nama pemasok, Nomor HP, Keterangan. *Contoh: Pak Budi (Pasar), Supplier Online X* |
 | **Katalog Produk (Inventory)** | Tabel semua produk beserta: Foto, Nama, Merek, Ukuran, Kondisi, Harga Beli, Harga Jual, Stok, Status. Filter by: Merek, Kategori, Kondisi, Stok. Tombol Tambah Produk → Form input lengkap produk. Tombol Edit & Nonaktifkan. |
-| **Barang Masuk (Stock In)** | Tabel riwayat semua penerimaan barang dari pemasok. Filter by tanggal & pemasok. Tombol "Catat Barang Masuk" → Form: pilih pemasok, tanggal terima, lalu input baris demi baris produk (nama/merek/ukuran/kondisi/harga beli/jumlah). Submit → stok otomatis bertambah di tabel Produk. Detail per transaksi penerimaan. |
+| **Barang Masuk (Stock In)** | Tabel riwayat semua penerimaan barang dari pemasok. Filter by tanggal & pemasok. Tombol "Catat Barang Masuk" → Form: pilih pemasok, tanggal terima, lalu input baris demi baris. Pada tiap baris, Admin bisa **memilih produk existing (baik active maupun inactive)** ATAU **menambahkan produk baru secara inline** (via modal/inline form). Submit → stok otomatis bertambah di tabel Produk (dan produk baru otomatis terdaftar). Detail per transaksi penerimaan. |
 | **Manajemen User** | Tabel daftar akun kasir. CRUD: Tambah, Ubah, Nonaktifkan akun kasir. |
 | **Laporan Penjualan** | Tabel rekap semua transaksi. Filter: rentang tanggal, kasir, metode bayar. Klik detail → lihat item per struk. Ekspor / Cetak PDF laporan terfilter. Menampilkan kolom: No. Struk, Tanggal, Kasir, Total, Metode Bayar. |
 | **Laporan Inventory** | Tabel stok saat ini. Tampilkan: total nilai inventory (Σ Harga Beli × Stok), total potensi pendapatan (Σ Harga Jual × Stok). Filter by merek/kategori. |
