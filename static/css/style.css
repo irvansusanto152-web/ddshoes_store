@@ -256,3 +256,141 @@ body.sidebar-closed .mdc-drawer-app-content { margin-left: 0 !important; }
 .search-box i, .filter-box i { color: #94a3b8; margin-right: 8px; }
 .search-box input { border: none; outline: none; background: transparent; font-family: 'Inter'; font-size: 0.9rem; }
 .filter-box select { border: none; outline: none; background: transparent; font-family: 'Inter'; font-size: 0.9rem; color: #334155; }
+
+/* ===== GLASS PANEL ===== */
+.glass-panel {
+    background: rgba(255,255,255,0.92);
+    border: 1px solid rgba(255,255,255,0.9);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-glass);
+    padding: 20px 24px;
+    backdrop-filter: blur(12px);
+}
+
+/* ===== SAAS TABLE ===== */
+.saas-table thead th {
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #64748b;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    padding: 10px 14px;
+}
+.saas-table tbody tr { transition: background 0.15s; }
+.saas-table tbody tr:hover { background: #f0f9ff; }
+.saas-table td { padding: 10px 14px; vertical-align: middle; color: #334155; font-size: 0.9rem; border-bottom: 1px solid #f1f5f9; }
+
+/* ===== SAAS INPUT ===== */
+.saas-input {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 9px 14px;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    background: #fff;
+}
+.saas-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    outline: none;
+}
+
+/* ===== POS PRODUCT CARD ===== */
+.saas-card {
+    border-radius: var(--radius-xl) !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+}
+.saas-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-hover) !important;
+}
+
+/* ===== BTN MASUK ===== */
+.btn-masuk {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border: none !important;
+    border-radius: 50px !important;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(99,102,241,0.35);
+    transition: all 0.3s ease;
+    color: white !important;
+}
+.btn-masuk:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(99,102,241,0.45);
+    color: white !important;
+}
+
+/* ===== TOPBAR ===== */
+.top-navbar {
+    height: 60px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+/* ===== BACKDROP MOBILE ===== */
+#sb-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS ===== */
+
+/* Tablet & below (max 1100px): stat cards 2-col, sidebar hidden by default */
+@media (max-width: 1100px) {
+    .dashboard-grid { flex-direction: column !important; }
+}
+
+/* Tablet (max 992px): hide sidebar by default */
+@media (max-width: 992px) {
+    aside.mdc-drawer {
+        transform: translateX(-240px);
+        z-index: 200;
+    }
+    body.sidebar-open aside.mdc-drawer {
+        transform: translateX(0);
+    }
+    body.sidebar-open #sb-backdrop {
+        display: block;
+    }
+    body.sidebar-open .mdc-drawer-app-content,
+    body.sidebar-closed .mdc-drawer-app-content {
+        margin-left: 0 !important;
+    }
+    .login-hero { display: none !important; }
+    .login-form-col { max-width: 100% !important; flex: 0 0 100% !important; }
+}
+
+/* Tablet (max 720px): stat cards 2 per row */
+@media (max-width: 720px) {
+    .stat-card-col { flex: 0 0 50%; max-width: 50%; }
+}
+
+/* Mobile (max 480px): stat cards 1 per row */
+@media (max-width: 480px) {
+    .stat-card-col { flex: 0 0 100%; max-width: 100%; }
+    .saas-header { flex-direction: column; align-items: flex-start; }
+    .sh-actions { width: 100%; }
+    .sh-actions .btn { width: 100%; }
+    .saas-toolbar { flex-direction: column; }
+    .content-wrapper { padding: 12px; }
+    .glass-panel { padding: 14px 16px; }
+    .pos-container { flex-direction: column !important; }
+}

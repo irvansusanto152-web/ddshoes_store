@@ -1,3 +1,4 @@
+import json
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -11,6 +12,8 @@ from django.contrib.auth.models import User
 
 def login_view(request):
     if request.user.is_authenticated:
+        if request.user.userprofile.role == 'kasir':
+            return redirect('pos_page')
         return redirect('dashboard')
         
     if request.method == 'POST':
@@ -19,7 +22,8 @@ def login_view(request):
         user = authenticate(request, username=u, password=p)
         if user is not None:
             login(request, user)
-            # Custom logic: check role
+            if user.userprofile.role == 'kasir':
+                return redirect('pos_page')
             return redirect('dashboard')
         else:
             messages.error(request, "Username atau password salah.")
@@ -34,8 +38,7 @@ def logout_view(request):
 def dashboard_view(request):
     # Cek role
     if request.user.userprofile.role != 'admin':
-        # Fallback ke POS nanti jika kasir
-        return render(request, 'base.html') # Placeholder if not admin, or redirect
+        return redirect('pos_page')
 
     today = timezone.now().date()
 
@@ -515,3 +518,209 @@ def closing_admin(request):
         'date_filter': date_filter,
         'cashier_id': cashier_id
     })
+
+# --- POS / KASIR ---
+@login_required
+def pos_page(request):
+    if request.user.userprofile.role not in ['admin', 'kasir']:
+        return redirect('dashboard')
+    
+    categories = Categories.objects.all()
+    brands = Brands.objects.all()
+    return render(request, 'pos.html', {'categories': categories, 'brands': brands})
+
+@login_required
+def pos_get_products(request):
+    query = request.GET.get('q', '').lower()
+    cat_id = request.GET.get('category_id')
+    brand_id = request.GET.get('brand_id')
+
+    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
+    if query:
+        qs = qs.filter(name__icontains=query)
+    if cat_id:
+        qs = qs.filter(category_id=cat_id)
+    if brand_id:
+        qs = qs.filter(brand_id=brand_id)
+
+    data = []
+    for p in qs:
+        data.append({
+            'id': p.id,
+            'name': p.name,
+            'brand': p.brand.name if p.brand else '-',
+            'size': p.size,
+            'condition': p.condition,
+            'price': p.sell_price,
+            'stock': p.stock,
+            'image': p.image.url if p.image else ''
+        })
+    return JsonResponse({'products': data})
+
+@login_required
+def pos_process_payment(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            items = data.get('items', [])
+            payment_method = data.get('payment_method')
+            cash_received = int(data.get('cash_received', 0))
+
+            if not items:
+                return JsonResponse({'status': 'error', 'message': 'Keranjang kosong.'})
+
+            # Calculate total
+            total_amount = 0
+            product_updates = []
+            for item in items:
+                p = Products.objects.get(id=item['id'])
+                if p.stock < int(item['qty']):
+                    return JsonResponse({'status': 'error', 'message': f'Stok {p.name} tidak mencukupi.'})
+                subtotal = p.sell_price * int(item['qty'])
+                total_amount += subtotal
+                product_updates.append((p, int(item['qty']), subtotal))
+
+            change_amount = 0
+            if payment_method == 'tunai':
+                if cash_received < total_amount:
+                    return JsonResponse({'status': 'error', 'message': 'Uang tunai kurang.'})
+                change_amount = cash_received - total_amount
+            else:
+                cash_received = total_amount # Untuk QRIS/Transfer, cash received dianggap pas
+
+            # Create Transaction
+            trx = Transactions.objects.create(
+                cashier=request.user,
+                total_amount=total_amount,
+                payment_method=payment_method,
+                cash_received=cash_received,
+                change_amount=change_amount
+            )
+
+            # Create Details & signals will update stock
+            for p, qty, subtotal in product_updates:
+                TransactionDetails.objects.create(
+                    transaction=trx,
+                    product=p,
+                    quantity=qty,
+                    sell_price=p.sell_price,
+                    subtotal=subtotal
+                )
+            
+            # Return transaction data for receipt printing
+            receipt_data = {
+                'id': trx.id,
+                'date': trx.transaction_date.strftime("%d %b %Y %H:%M"),
+                'cashier': trx.cashier.username,
+                'total': trx.total_amount,
+                'method': trx.get_payment_method_display(),
+                'received': trx.cash_received,
+                'change': trx.change_amount,
+                'items': [{'name': p.name, 'size': p.size, 'qty': qty, 'price': p.sell_price, 'subtotal': subtotal} for p, qty, subtotal in product_updates]
+            }
+
+            return JsonResponse({'status': 'success', 'message': 'Transaksi berhasil.', 'receipt': receipt_data})
+
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@login_required
+def catalog_kasir(request):
+    if request.user.userprofile.role not in ['admin', 'kasir']:
+        return redirect('dashboard')
+    
+    query = request.GET.get('q', '')
+    brand_id = request.GET.get('brand_id', '')
+    category_id = request.GET.get('category_id', '')
+
+    qs = Products.objects.select_related('brand', 'category').filter(status='active').order_by('name')
+    if query:
+        qs = qs.filter(name__icontains=query)
+    if brand_id:
+        qs = qs.filter(brand_id=brand_id)
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+
+    brands = Brands.objects.all()
+    categories = Categories.objects.all()
+
+    return render(request, 'catalog_kasir.html', {
+        'products': qs,
+        'brands': brands,
+        'categories': categories,
+        'q': query,
+        'brand_id': brand_id,
+        'category_id': category_id
+    })
+
+# --- CLOSING KASIR ---
+@login_required
+def closing_kasir(request):
+    if request.user.userprofile.role not in ['admin', 'kasir']:
+        return redirect('dashboard')
+
+    today = timezone.now().date()
+    cashier = request.user
+
+    # Check if already submitted today
+    existing_closing = CashClosings.objects.filter(cashier=cashier, closing_date=today).first()
+
+    # Compute today's totals from transactions
+    today_transactions = Transactions.objects.filter(
+        cashier=cashier,
+        transaction_date__date=today
+    )
+    total_cash    = today_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
+    total_transfer= today_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
+    total_qris    = today_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
+    grand_total   = total_cash + total_transfer + total_qris
+    trx_count     = today_transactions.count()
+
+    return render(request, 'closing_kasir.html', {
+        'today': today,
+        'existing_closing': existing_closing,
+        'total_cash': total_cash,
+        'total_transfer': total_transfer,
+        'total_qris': total_qris,
+        'grand_total': grand_total,
+        'trx_count': trx_count,
+    })
+
+@login_required
+def closing_submit(request):
+    if request.method == 'POST':
+        if request.user.userprofile.role not in ['admin', 'kasir']:
+            return JsonResponse({'status': 'error', 'message': 'Akses ditolak.'})
+
+        today = timezone.now().date()
+        cashier = request.user
+
+        if CashClosings.objects.filter(cashier=cashier, closing_date=today).exists():
+            return JsonResponse({'status': 'error', 'message': 'Closing hari ini sudah dikunci.'})
+
+        actual_cash = int(request.POST.get('actual_cash', 0))
+        notes = request.POST.get('notes', '')
+
+        today_transactions = Transactions.objects.filter(cashier=cashier, transaction_date__date=today)
+        total_cash    = today_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_transfer= today_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_qris    = today_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
+
+        difference = actual_cash - total_cash
+
+        CashClosings.objects.create(
+            cashier=cashier,
+            closing_date=today,
+            system_cash_total=total_cash,
+            system_transfer_total=total_transfer,
+            system_qris_total=total_qris,
+            actual_cash=actual_cash,
+            cash_difference=difference,
+            notes=notes,
+            is_locked=True
+        )
+
+        messages.success(request, "Closing kasir berhasil dikunci!")
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'})

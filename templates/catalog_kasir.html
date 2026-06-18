@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Katalog Produk{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Katalog Produk</h2>
+        <p>Lihat ketersediaan stok sepatu saat ini.</p>
+    </div>
+</div>
+
+<div class="glass-panel mb-4">
+    <form method="GET" action="{% url 'catalog_kasir' %}" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label text-muted fw-bold mb-1">Cari Produk</label>
+            <input type="text" name="q" class="form-control saas-input" value="{{ q }}" placeholder="Nama / Ukuran...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted fw-bold mb-1">Merek</label>
+            <select name="brand_id" class="form-select saas-input">
+                <option value="">Semua Merek</option>
+                {% for b in brands %}
+                <option value="{{ b.id }}" {% if brand_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted fw-bold mb-1">Kategori</label>
+            <select name="category_id" class="form-select saas-input">
+                <option value="">Semua Kategori</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100 fw-bold">Cari / Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-4">
+    {% for p in products %}
+    <div class="col-6 col-md-4 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm saas-card">
+            {% if p.image %}
+            <img src="{{ p.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="{{ p.name }}">
+            {% else %}
+            <img src="https://placehold.co/400x400/e2e8f0/64748b?text=No+Image" class="card-img-top" style="height: 200px; object-fit: cover;" alt="No Image">
+            {% endif %}
+            <div class="card-body p-3 d-flex flex-column">
+                <h5 class="fw-bold mb-1 text-truncate" title="{{ p.name }}">{{ p.name }}</h5>
+                <p class="text-muted mb-2 small">
+                    {{ p.brand.name }} | {{ p.category.name }}
+                </p>
+                <div class="mb-2">
+                    <span class="badge bg-light text-dark border">{{ p.size }}</span>
+                    <span class="badge bg-light text-dark border">{{ p.condition }}</span>
+                </div>
+                <div class="mt-auto d-flex justify-content-between align-items-end">
+                    <h5 class="fw-bold text-primary mb-0">Rp {{ p.sell_price|intcomma }}</h5>
+                    <span class="badge {% if p.stock <= 3 %}bg-danger{% else %}bg-success{% endif %} rounded-pill px-3">Sisa: {{ p.stock }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center text-muted py-5">
+        <i class="material-icons mb-3" style="font-size: 64px; color: #cbd5e1;">inventory_2</i>
+        <h4>Tidak ada produk ditemukan.</h4>
+        <p>Coba gunakan kata kunci pencarian yang berbeda.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

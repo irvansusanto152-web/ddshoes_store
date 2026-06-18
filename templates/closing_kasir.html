@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Closing Kasir{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Penutupan Kasir (Closing)</h2>
+        <p>Rekap transaksi hari ini — {{ today|date:"d F Y" }}</p>
+    </div>
+</div>
+
+{% if existing_closing %}
+<div class="glass-panel text-center py-5">
+    <div class="mb-3">
+        <i class="material-icons text-success" style="font-size: 72px;">lock</i>
+    </div>
+    <h3 class="fw-bold text-success">Closing Hari Ini Sudah Dikunci</h3>
+    <p class="text-muted">Data penutupan kasir untuk tanggal <strong>{{ today|date:"d F Y" }}</strong> telah disubmit dan dikunci.</p>
+    <hr class="my-4 w-50 mx-auto">
+    <div class="row justify-content-center g-3">
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 border">
+                <div class="text-muted small mb-1">Total Kas Fisik Aktual</div>
+                <h4 class="fw-bold text-primary">Rp {{ existing_closing.actual_cash|intcomma }}</h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 border">
+                <div class="text-muted small mb-1">Selisih</div>
+                <h4 class="fw-bold {% if existing_closing.cash_difference == 0 %}text-success{% else %}text-danger{% endif %}">
+                    Rp {{ existing_closing.cash_difference|intcomma }}
+                </h4>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="p-3 bg-light rounded-3 border">
+                <div class="text-muted small mb-1">Status</div>
+                {% if existing_closing.cash_difference == 0 %}
+                    <span class="badge bg-success fs-6 px-3 rounded-pill">MATCH ✓</span>
+                {% else %}
+                    <span class="badge bg-danger fs-6 px-3 rounded-pill">SELISIH !</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if existing_closing.notes %}
+    <div class="mt-4 text-muted">Catatan: <em>{{ existing_closing.notes }}</em></div>
+    {% endif %}
+</div>
+
+{% else %}
+<div class="row g-4">
+    <!-- Ringkasan Sistem -->
+    <div class="col-md-5">
+        <div class="glass-panel h-100">
+            <h5 class="fw-bold mb-4 border-bottom pb-2">Ringkasan Sistem Hari Ini</h5>
+
+            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded-3 border bg-light">
+                <div>
+                    <div class="text-muted small">Transaksi Tunai</div>
+                    <h5 class="fw-bold mb-0 text-success">Rp {{ total_cash|intcomma }}</h5>
+                </div>
+                <i class="material-icons text-success" style="font-size:32px;">payments</i>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded-3 border bg-light">
+                <div>
+                    <div class="text-muted small">Transaksi Transfer BRI</div>
+                    <h5 class="fw-bold mb-0 text-info">Rp {{ total_transfer|intcomma }}</h5>
+                </div>
+                <i class="material-icons text-info" style="font-size:32px;">account_balance</i>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded-3 border bg-light">
+                <div>
+                    <div class="text-muted small">Transaksi QRIS</div>
+                    <h5 class="fw-bold mb-0 text-warning">Rp {{ total_qris|intcomma }}</h5>
+                </div>
+                <i class="material-icons text-warning" style="font-size:32px;">qr_code_scanner</i>
+            </div>
+
+            <div class="border-top pt-3 mt-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold">Grand Total Penjualan</span>
+                    <h4 class="fw-bold text-primary mb-0">Rp {{ grand_total|intcomma }}</h4>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-2 text-muted">
+                    <span>Jumlah Transaksi</span>
+                    <span class="fw-bold">{{ trx_count }} transaksi</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Closing -->
+    <div class="col-md-7">
+        <div class="glass-panel h-100">
+            <h5 class="fw-bold mb-4 border-bottom pb-2">Input Kas Fisik & Kunci Closing</h5>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-secondary mb-1">Jumlah Kas Fisik di Laci (Tunai)</label>
+                <div class="input-group">
+                    <span class="input-group-text fw-bold bg-light">Rp</span>
+                    <input type="number" class="form-control saas-input fs-4 fw-bold text-center" id="actual-cash" placeholder="0">
+                </div>
+                <div class="small text-muted mt-1">Hitung uang tunai di laci kasir, lalu masukkan jumlahnya.</div>
+            </div>
+
+            <div class="p-4 rounded-3 border mb-4" id="selisih-box" style="background: #f8fafc;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-bold text-muted">Selisih (Kas Fisik - Tunai Sistem)</span>
+                    <h3 class="fw-bold mb-0" id="selisih-display" style="color: #6366f1;">Rp 0</h3>
+                </div>
+                <div class="text-center mt-3">
+                    <span class="badge fs-6 px-4 py-2 rounded-pill" id="status-badge" style="background: #e2e8f0; color: #64748b;">Masukkan jumlah kas fisik</span>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold text-secondary mb-1">Catatan (Opsional)</label>
+                <textarea class="form-control saas-input" id="closing-notes" rows="3" placeholder="Misalnya: ada koin kembalian Rp 5.000..."></textarea>
+            </div>
+
+            <button class="btn btn-primary w-100 py-3 fw-bold fs-5" id="btn-submit-closing" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; box-shadow: 0 4px 15px rgba(99,102,241,0.4);">
+                <i class="material-icons align-middle me-2">lock</i> Submit & Kunci Closing
+            </button>
+            <p class="text-muted small text-center mt-2"><i class="material-icons align-middle" style="font-size:14px;">info</i> Setelah dikunci, data tidak dapat diubah.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+{% if not existing_closing %}
+<script>
+    const systemCash = {{ total_cash }};
+
+    function formatMoney(n) {
+        return "Rp " + Math.abs(parseInt(n)).toLocaleString('id-ID');
+    }
+
+    $('#actual-cash').on('input', function() {
+        let actual = parseInt($(this).val()) || 0;
+        let diff = actual - systemCash;
+        $('#selisih-display').text(formatMoney(diff));
+
+        if (diff === 0) {
+            $('#selisih-display').css('color', '#10b981');
+            $('#status-badge').css({'background': '#d1fae5', 'color': '#065f46'}).text('✓ MATCH — Kas sesuai!');
+        } else if (diff > 0) {
+            $('#selisih-display').css('color', '#f59e0b');
+            $('#status-badge').css({'background': '#fef3c7', 'color': '#92400e'}).text('⚠ LEBIH — Kelebihan kas');
+        } else {
+            $('#selisih-display').css('color', '#ef4444');
+            $('#status-badge').css({'background': '#fee2e2', 'color': '#991b1b'}).text('✗ SELISIH — Kas kurang');
+        }
+    });
+
+    $('#btn-submit-closing').click(function() {
+        let actual = $('#actual-cash').val();
+        if (!actual || parseInt(actual) < 0) {
+            alert('Masukkan jumlah kas fisik terlebih dahulu!');
+            return;
+        }
+
+        if (!confirm('Yakin ingin mengunci closing? Data tidak dapat diubah setelah dikunci.')) return;
+
+        let btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Memproses...');
+        start_loader();
+
+        $.ajax({
+            url: "{% url 'closing_submit' %}",
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            data: {
+                actual_cash: actual,
+                notes: $('#closing-notes').val()
+            },
+            success: function(resp) {
+                end_loader();
+                if (resp.status === 'success') {
+                    location.reload();
+                } else {
+                    alert('Gagal: ' + resp.message);
+                    btn.prop('disabled', false).html('<i class="material-icons align-middle me-2">lock</i> Submit & Kunci Closing');
+                }
+            },
+            error: function() {
+                end_loader();
+                alert('Terjadi kesalahan sistem.');
+                btn.prop('disabled', false).html('<i class="material-icons align-middle me-2">lock</i> Submit & Kunci Closing');
+            }
+        });
+    });
+</script>
+{% endif %}
+{% endblock %}

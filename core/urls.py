@@ -42,4 +42,12 @@ urlpatterns = [
     path('sales-report/', views.sales_report, name='sales_report'),
     path('inventory-report/', views.inventory_report, name='inventory_report'),
     path('closing-admin/', views.closing_admin, name='closing_admin'),
+
+    # POS / Kasir
+    path('pos/', views.pos_page, name='pos_page'),
+    path('pos/get-products/', views.pos_get_products, name='pos_get_products'),
+    path('pos/process-payment/', views.pos_process_payment, name='pos_process_payment'),
+    path('catalog-kasir/', views.catalog_kasir, name='catalog_kasir'),
+    path('closing-kasir/', views.closing_kasir, name='closing_kasir'),
+    path('closing-kasir/submit/', views.closing_submit, name='closing_submit'),
 ]
