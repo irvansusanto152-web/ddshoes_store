@@ -1,0 +1,19 @@
+# Environments
+env/
+venv/
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Database
+db.sqlite3
+
+# Static / Media
+media/
+# We keep static/ but we could ignore if we want, but since custom css is there, we track static/
+
+# IDEs
+.vscode/
+.idea/

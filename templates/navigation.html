@@ -1,0 +1,46 @@
+<aside class="mdc-drawer mdc-drawer--dismissible mdc-drawer--open" id="mainSidebar">
+    <!-- Particle canvas background -->
+    <canvas id="sb-particle-canvas"></canvas>
+    <!-- Dua scanline animasi -->
+    <div class="sb-scanline"></div>
+    <div class="sb-scanline-2"></div>
+
+    <div class="sb-inner">
+        <!-- BRAND / LOGO AREA -->
+        <div class="sb-brand">
+            <div class="sb-logo-wrap" id="sbLogoWrap" title="Klik untuk ganti logo">
+                <div class="sb-logo-inner">
+                    <div id="sbLogoDefault"><i class="material-icons text-white" style="font-size: 32px;">shopping_bag</i></div>
+                    <img id="sb-logo-img" src="" alt="Logo" style="display:none;">
+                    <div class="sb-logo-overlay"></div>
+                </div>
+                <div class="sb-logo-ring"></div>
+                <div class="sb-logo-ring-2"></div>
+            </div>
+            <span class="sb-brand-name">DD SHOES</span>
+            <span class="sb-brand-sub">POS SYSTEM</span>
+            <button class="sb-logo-reset" id="sbLogoReset" style="display: none;">✕ reset logo</button>
+        </div>
+
+        <!-- NAVIGASI -->
+        <div class="sb-nav">
+            <ul class="mdc-list">
+                <div class="sb-glow-divider"></div>
+                <div class="sb-section-label">MAIN MENU</div>
+
+                <li class="mdc-drawer-item">
+                    <a class="mdc-drawer-link active" href="{% url 'dashboard' %}">
+                        <i class="material-icons">dashboard</i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <input type="file" id="logoUploadInput" accept="image/*" style="display: none;">
+    <div class="sb-toast" id="sbToast"></div>
+</aside>
+
+<!-- Backdrop untuk mobile -->
+<div id="sb-backdrop" onclick="toggleSidebar()"></div>

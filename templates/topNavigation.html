@@ -1,0 +1,36 @@
+<header class="mdc-top-app-bar border-bottom shadow">
+    <div class="mdc-top-app-bar__row" style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px; height: 64px;">
+        <!-- Kiri: Hamburger menu -->
+        <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+            <button class="material-icons mdc-top-app-bar__navigation-icon mdc-icon-button sidebar-toggler" onclick="toggleSidebar()" style="background: none; border: none; cursor: pointer;">
+                menu
+            </button>
+        </div>
+        <!-- Kanan: Profil user -->
+        <div class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
+            <div class="menu-button-container menu-profile dropdown d-none d-md-block">
+                <button class="mdc-button mdc-menu-button dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none; padding: 0;">
+                    <span class="d-flex align-items-center">
+                        <span class="figure" style="display:flex; align-items:center; justify-content:center; background:#e2e8f0; border-radius:50%; width:35px; height:35px; margin-right:10px;">
+                            {% if request.user.userprofile.role == 'admin' %}
+                            <i class="material-icons" style="color: #6366f1;">admin_panel_settings</i>
+                            {% else %}
+                            <i class="material-icons" style="color: #10b981;">storefront</i>
+                            {% endif %}
+                        </span>
+                        <span class="user-name" style="font-weight:600; color:#334155;">
+                            {{ request.user.username }}
+                        </span>
+                    </span>
+                </button>
+                <!-- Dropdown menu -->
+                <ul class="dropdown-menu dropdown-menu-end">
+                    {% if request.user.is_superuser %}
+                    <li><a class="dropdown-item" href="/admin/"><i class="material-icons align-middle me-2">settings</i> Django Admin</a></li>
+                    {% endif %}
+                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="material-icons align-middle me-2">logout</i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
