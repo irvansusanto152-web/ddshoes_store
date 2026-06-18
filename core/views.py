@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import timedelta
-from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers
+from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers, StockIns, StockInDetails
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -209,3 +209,165 @@ def suppliers_delete(request):
         Suppliers.objects.get(id=id).delete()
         messages.success(request, "Pemasok berhasil dihapus.")
         return JsonResponse({'status': 'success'})
+
+# --- PRODUCTS ---
+@login_required
+def products_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    products = Products.objects.select_related('brand', 'category').all().order_by('-id')
+    return render(request, 'products.html', {'products': products})
+
+@login_required
+def products_save(request):
+    if request.method == 'POST':
+        id = request.POST.get('id', '')
+        name = request.POST.get('name', '')
+        category_id = request.POST.get('category_id', '')
+        brand_id = request.POST.get('brand_id', '')
+        size = request.POST.get('size', '')
+        condition = request.POST.get('condition', '')
+        description = request.POST.get('description', '')
+        buy_price = request.POST.get('buy_price', '0')
+        sell_price = request.POST.get('sell_price', '0')
+        stock = request.POST.get('stock', '0')
+        image = request.FILES.get('image')
+
+        cat = Categories.objects.get(id=category_id) if category_id else None
+        brand = Brands.objects.get(id=brand_id) if brand_id else None
+
+        if id:
+            p = Products.objects.get(id=id)
+            p.name = name
+            p.category = cat
+            p.brand = brand
+            p.size = size
+            p.condition = condition
+            p.description = description
+            p.buy_price = buy_price
+            p.sell_price = sell_price
+            # stock usually updated via stockin, but allow edit here just in case? Or maybe keep it? Let's allow edit.
+            p.stock = stock
+            if image:
+                p.image = image
+            p.save()
+            messages.success(request, "Produk berhasil diubah.")
+        else:
+            p = Products.objects.create(
+                name=name, category=cat, brand=brand, size=size,
+                condition=condition, description=description,
+                buy_price=buy_price, sell_price=sell_price, stock=stock
+            )
+            if image:
+                p.image = image
+                p.save()
+            messages.success(request, "Produk berhasil ditambahkan.")
+        return JsonResponse({'status': 'success'})
+    
+    id = request.GET.get('id', '')
+    product = Products.objects.get(id=id) if id else None
+    categories = Categories.objects.all()
+    brands = Brands.objects.all()
+    conditions = Products.CONDITION_CHOICES
+    
+    context = {
+        'product': product,
+        'categories': categories,
+        'brands': brands,
+        'conditions': conditions,
+    }
+    return render(request, 'products_form.html', context)
+
+@login_required
+def products_delete(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        Products.objects.get(id=id).delete()
+        messages.success(request, "Produk berhasil dihapus.")
+        return JsonResponse({'status': 'success'})
+
+@login_required
+def products_toggle_status(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        p = Products.objects.get(id=id)
+        if p.status == 'active':
+            p.status = 'inactive'
+            msg = "Produk dinonaktifkan."
+        else:
+            p.status = 'active'
+            msg = "Produk diaktifkan."
+        p.save()
+        messages.success(request, msg)
+        return JsonResponse({'status': 'success', 'new_status': p.status})
+
+# --- STOCK IN ---
+@login_required
+def stockin_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    stockins = StockIns.objects.select_related('supplier', 'received_by').annotate(total_items=Count('details')).order_by('-received_date', '-id')
+    return render(request, 'stockin.html', {'stockins': stockins})
+
+@login_required
+def stockin_detail(request, pk):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    stockin = StockIns.objects.get(id=pk)
+    return render(request, 'stockin_detail.html', {'stockin': stockin})
+
+@login_required
+def stockin_save(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    
+    if request.method == 'POST':
+        supplier_id = request.POST.get('supplier_id')
+        received_date = request.POST.get('received_date')
+        notes = request.POST.get('notes', '')
+        
+        product_ids = request.POST.getlist('product_id[]')
+        quantities = request.POST.getlist('quantity[]')
+        buy_prices = request.POST.getlist('buy_price[]')
+
+        if not supplier_id or not received_date or not product_ids:
+            messages.error(request, "Data penerimaan tidak lengkap.")
+            return redirect('stockin_save')
+
+        supplier = Suppliers.objects.get(id=supplier_id)
+        si = StockIns.objects.create(
+            supplier=supplier,
+            received_by=request.user,
+            received_date=received_date,
+            notes=notes
+        )
+
+        for i in range(len(product_ids)):
+            pid = product_ids[i]
+            qty_str = quantities[i]
+            bp_str = buy_prices[i]
+            
+            qty = int(qty_str) if qty_str.strip() else 0
+            bp = int(bp_str) if bp_str.strip() else 0
+            
+            if qty > 0:
+                product = Products.objects.get(id=pid)
+                StockInDetails.objects.create(
+                    stock_in=si,
+                    product=product,
+                    quantity=qty,
+                    buy_price=bp
+                )
+                # Note: signals.py handles incrementing product.stock
+                
+                # Update product buy_price if changed? The PRD implies stock details have buy_price, let's also update the master product buy_price to the latest one
+                if bp > 0:
+                    product.buy_price = bp
+                    product.save()
+
+        messages.success(request, "Penerimaan barang berhasil dicatat.")
+        return redirect('stockin_list')
+
+    suppliers = Suppliers.objects.all().order_by('name')
+    products = Products.objects.filter(status='active').select_related('brand', 'category').order_by('name')
+    return render(request, 'stockin_form.html', {'suppliers': suppliers, 'products': products})

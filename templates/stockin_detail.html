@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Detail Penerimaan Barang{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <a href="{% url 'stockin_list' %}" class="text-muted text-decoration-none mb-2 d-inline-block"><i class="material-icons align-middle" style="font-size:16px;">arrow_back</i> Kembali ke Riwayat</a>
+        <h2>Detail Barang Masuk #{{ stockin.id }}</h2>
+        <p>Informasi lengkap penerimaan barang.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="glass-panel h-100">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Informasi Umum</h5>
+            <table class="table table-borderless table-sm mb-0">
+                <tr>
+                    <td class="text-muted" width="40%">Tanggal</td>
+                    <td class="fw-bold">: {{ stockin.received_date|date:"d F Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Pemasok</td>
+                    <td class="fw-bold">: {{ stockin.supplier.name }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">No. HP Pemasok</td>
+                    <td>: {{ stockin.supplier.phone|default:'-' }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Dicatat Oleh</td>
+                    <td>: {{ stockin.received_by.username }}</td>
+                </tr>
+            </table>
+            
+            <div class="mt-4">
+                <h6 class="text-muted fw-bold mb-1">Catatan:</h6>
+                <div class="p-3 bg-light rounded border text-muted">
+                    {{ stockin.notes|default:'Tidak ada catatan.'|linebreaks }}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="glass-panel h-100">
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Daftar Item</h5>
+            <div class="table-responsive">
+                <table class="table table-hover saas-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="5%" class="text-center">No</th>
+                            <th>Produk</th>
+                            <th class="text-center">Kondisi</th>
+                            <th class="text-end">Harga Beli</th>
+                            <th class="text-center">Qty</th>
+                            <th class="text-end">Subtotal Nilai</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in stockin.details.all %}
+                        <tr>
+                            <td class="text-center text-muted">{{ forloop.counter }}</td>
+                            <td>
+                                <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
+                                <small class="text-muted">{{ item.product.size }} | {{ item.product.brand.name }}</small>
+                            </td>
+                            <td class="text-center"><span class="badge bg-light text-dark border">{{ item.product.condition }}</span></td>
+                            <td class="text-end text-muted">Rp {{ item.buy_price|intcomma }}</td>
+                            <td class="text-center fw-bold">{{ item.quantity }}</td>
+                            <td class="text-end fw-bold" style="color: #6366f1;">
+                                Rp {% widthratio item.buy_price 1 item.quantity %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center text-muted">Tidak ada data item.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

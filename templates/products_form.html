@@ -1,0 +1,129 @@
+<div class="container-fluid">
+    <form action="" id="product-form" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ product.id|default:'' }}">
+        
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group mb-3">
+                    <label for="name" class="control-label fw-bold text-secondary mb-1">Nama Produk</label>
+                    <input type="text" name="name" id="name" class="form-control saas-input" value="{{ product.name|default:'' }}" required placeholder="Contoh: Air Max 90">
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="brand_id" class="control-label fw-bold text-secondary mb-1">Merek</label>
+                        <select name="brand_id" id="brand_id" class="form-select select2" required>
+                            <option value="" disabled selected>Pilih Merek</option>
+                            {% for b in brands %}
+                            <option value="{{ b.id }}" {% if product.brand_id == b.id %}selected{% endif %}>{{ b.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="category_id" class="control-label fw-bold text-secondary mb-1">Kategori</label>
+                        <select name="category_id" id="category_id" class="form-select select2" required>
+                            <option value="" disabled selected>Pilih Kategori</option>
+                            {% for c in categories %}
+                            <option value="{{ c.id }}" {% if product.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="size" class="control-label fw-bold text-secondary mb-1">Ukuran</label>
+                        <input type="text" name="size" id="size" class="form-control saas-input" value="{{ product.size|default:'' }}" required placeholder="Contoh: 42 EUR">
+                    </div>
+                    <div class="col-md-6 form-group mb-3">
+                        <label for="condition" class="control-label fw-bold text-secondary mb-1">Kondisi</label>
+                        <select name="condition" id="condition" class="form-select saas-input" required>
+                            <option value="" disabled selected>Pilih Kondisi</option>
+                            {% for val, label in conditions %}
+                            <option value="{{ val }}" {% if product.condition == val %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 form-group mb-3">
+                        <label for="buy_price" class="control-label fw-bold text-secondary mb-1">Harga Beli</label>
+                        <input type="number" name="buy_price" id="buy_price" class="form-control saas-input text-end" value="{{ product.buy_price|default:0 }}" required min="0">
+                    </div>
+                    <div class="col-md-4 form-group mb-3">
+                        <label for="sell_price" class="control-label fw-bold text-secondary mb-1">Harga Jual</label>
+                        <input type="number" name="sell_price" id="sell_price" class="form-control saas-input text-end" value="{{ product.sell_price|default:0 }}" required min="0">
+                    </div>
+                    <div class="col-md-4 form-group mb-3">
+                        <label for="stock" class="control-label fw-bold text-secondary mb-1">Stok Saat Ini</label>
+                        <input type="number" name="stock" id="stock" class="form-control saas-input text-end" value="{{ product.stock|default:0 }}" required min="0">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="form-group mb-3">
+                    <label for="image" class="control-label fw-bold text-secondary mb-1">Foto Produk</label>
+                    <div class="border rounded-3 p-2 text-center" style="background: #f8fafc;">
+                        <img src="{% if product.image %}{{ product.image.url }}{% else %}#{% endif %}" alt="Preview" id="img-preview" class="img-fluid rounded" style="max-height: 200px; {% if not product.image %}display:none;{% endif %}">
+                        <i class="material-icons text-muted" id="img-icon" style="font-size: 64px; line-height: 200px; {% if product.image %}display:none;{% endif %}">add_photo_alternate</i>
+                    </div>
+                    <input type="file" name="image" id="image" class="form-control mt-2" accept="image/*">
+                </div>
+                
+                <div class="form-group mb-3">
+                    <label for="description" class="control-label fw-bold text-secondary mb-1">Deskripsi Singkat</label>
+                    <textarea name="description" id="description" rows="4" class="form-control saas-input">{{ product.description|default:'' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        // Init Select2 inside modal
+        $('.select2').select2({
+            dropdownParent: $('#uni_modal'),
+            width: '100%',
+            theme: 'bootstrap-5'
+        });
+
+        // Image Preview
+        $('#image').change(function(){
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#img-preview').attr('src', e.target.result).show();
+                    $('#img-icon').hide();
+                }
+                reader.readAsDataURL(this.files[0]);
+            }
+        });
+
+        $('#product-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this);
+            start_loader();
+            $.ajax({
+                url: "{% url 'products_save' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(resp) {
+                    if (resp.status == 'success') {
+                        location.reload();
+                    } else {
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                        end_loader();
+                    }
+                }
+            });
+        });
+    });
+</script>

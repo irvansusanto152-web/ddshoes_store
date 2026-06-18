@@ -21,4 +21,15 @@ urlpatterns = [
     path('suppliers/', views.suppliers_list, name='suppliers_list'),
     path('suppliers/save/', views.suppliers_save, name='suppliers_save'),
     path('suppliers/delete/', views.suppliers_delete, name='suppliers_delete'),
+
+    # Inventory: Products
+    path('products/', views.products_list, name='products_list'),
+    path('products/save/', views.products_save, name='products_save'),
+    path('products/delete/', views.products_delete, name='products_delete'),
+    path('products/toggle/', views.products_toggle_status, name='products_toggle_status'),
+
+    # Inventory: Stock In
+    path('stockin/', views.stockin_list, name='stockin_list'),
+    path('stockin/save/', views.stockin_save, name='stockin_save'),
+    path('stockin/detail/<int:pk>/', views.stockin_detail, name='stockin_detail'),
 ]

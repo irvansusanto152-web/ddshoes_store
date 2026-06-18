@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Barang Masuk (Stock In){% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Barang Masuk</h2>
+        <p>Riwayat penerimaan barang dari pemasok.</p>
+    </div>
+    <div class="sh-actions">
+        <a href="{% url 'stockin_save' %}" class="btn btn-primary btn-masuk">
+            <i class="material-icons me-1">add</i> Catat Barang Masuk
+        </a>
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="saas-toolbar mb-3">
+        <div class="st-search" style="position: relative; width: 100%; max-width: 400px;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-stockin" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari pemasok atau catatan...">
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table" id="stockin-table">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Tanggal</th>
+                    <th>Pemasok</th>
+                    <th class="text-center">Total Item</th>
+                    <th>Dicatat Oleh</th>
+                    <th>Catatan</th>
+                    <th width="10%" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for si in stockins %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ si.received_date|date:"d M Y" }}</td>
+                    <td style="color: #334155;">{{ si.supplier.name }}</td>
+                    <td class="text-center">
+                        <span class="badge bg-primary-subtle text-primary border rounded-pill px-3">{{ si.total_items }} jenis</span>
+                    </td>
+                    <td>{{ si.received_by.username }}</td>
+                    <td class="text-muted text-truncate" style="max-width: 200px;">{{ si.notes|default:'-' }}</td>
+                    <td class="text-center">
+                        <a href="{% url 'stockin_detail' si.id %}" class="btn btn-sm btn-light rounded-circle border" title="Detail" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-info" style="font-size: 16px; line-height: 30px;">visibility</i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Belum ada data barang masuk.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $("#search-stockin").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#stockin-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) { // exclude empty message
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

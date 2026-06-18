@@ -150,37 +150,37 @@
 
 ### 3.5 Katalog Produk (Inventory)
 
-- [ ] Buat view `products_list`, `products_save`, `products_delete`, `products_toggle_status`
-- [ ] Buat `products.html`:
-  - [ ] Page header + tombol "Tambah Produk"
-  - [ ] Toolbar pencarian + filter (by Merek, Kategori, Kondisi, Stok)
-  - [ ] Tabel produk dengan kolom: Foto, Nama, Merek, Ukuran, Kondisi, Harga Beli, Harga Jual, Stok, Status, Aksi
-  - [ ] Tombol Edit produk → `uni_modal` dengan form lengkap
-  - [ ] Tombol Toggle Status (Aktifkan/Nonaktifkan) → AJAX
-  - [ ] Tombol Hapus → `confirm_modal`
-- [ ] Form produk (via modal):
-  - [ ] Select2 untuk pilih Merek & Kategori
-  - [ ] Field: nama, ukuran, kondisi (dropdown: Baru/Like New/Good/Fair), deskripsi
-  - [ ] Field harga beli, harga jual, stok awal
-  - [ ] Upload foto produk (ImageField)
+- [x] Buat view `products_list`, `products_save`, `products_delete`, `products_toggle_status`
+- [x] Buat `products.html`:
+  - [x] Page header + tombol "Tambah Produk"
+  - [x] Toolbar pencarian + filter (by Merek, Kategori, Kondisi, Stok)
+  - [x] Tabel produk dengan kolom: Foto, Nama, Merek, Ukuran, Kondisi, Harga Beli, Harga Jual, Stok, Status, Aksi
+  - [x] Tombol Edit produk → `uni_modal` dengan form lengkap
+  - [x] Tombol Toggle Status (Aktifkan/Nonaktifkan) → AJAX
+  - [x] Tombol Hapus → `confirm_modal`
+- [x] Form produk (via modal):
+  - [x] Select2 untuk pilih Merek & Kategori
+  - [x] Field: nama, ukuran, kondisi (dropdown: Baru/Like New/Good/Fair), deskripsi
+  - [x] Field harga beli, harga jual, stok awal
+  - [x] Upload foto produk (ImageField)
 
 ### 3.6 Barang Masuk (Stock In)
 
-- [ ] Buat view `stockin_list`, `stockin_detail`, `stockin_save`
-- [ ] Buat `stockin.html` — halaman utama:
-  - [ ] Page header + tombol "Catat Barang Masuk"
-  - [ ] Toolbar filter (tanggal, pemasok)
-  - [ ] Tabel riwayat penerimaan (No. Dokumen, Tanggal, Pemasok, Dicatat Oleh, Jml Item, Aksi Detail)
-  - [ ] Link ke halaman detail per sesi penerimaan
-- [ ] Buat `stockin_form.html` — form catat barang masuk:
-  - [ ] Header form: Select2 pilih pemasok, input tanggal terima, textarea catatan
-  - [ ] Tabel baris detail dinamis (bisa tambah/hapus baris dengan JS)
-  - [ ] Setiap baris: Select2 pilih produk | ukuran | kondisi | harga beli | qty
-  - [ ] Tombol "Tambah Baris" & "Hapus Baris"
-  - [ ] Tombol "Simpan" → POST → sistem update stok produk otomatis
-- [ ] Buat `stockin_detail.html` — detail per sesi penerimaan:
-  - [ ] Info header (pemasok, tanggal, dicatat oleh, catatan)
-  - [ ] Tabel item yang diterima
+- [x] Buat view `stockin_list`, `stockin_detail`, `stockin_save`
+- [x] Buat `stockin.html` — halaman utama:
+  - [x] Page header + tombol "Catat Barang Masuk"
+  - [x] Toolbar filter (tanggal, pemasok)
+  - [x] Tabel riwayat penerimaan (No. Dokumen, Tanggal, Pemasok, Dicatat Oleh, Jml Item, Aksi Detail)
+  - [x] Link ke halaman detail per sesi penerimaan
+- [x] Buat `stockin_form.html` — form catat barang masuk:
+  - [x] Header form: Select2 pilih pemasok, input tanggal terima, textarea catatan
+  - [x] Tabel baris detail dinamis (bisa tambah/hapus baris dengan JS)
+  - [x] Setiap baris: Select2 pilih produk | ukuran | kondisi | harga beli | qty
+  - [x] Tombol "Tambah Baris" & "Hapus Baris"
+  - [x] Tombol "Simpan" → POST → sistem update stok produk otomatis
+- [x] Buat `stockin_detail.html` — detail per sesi penerimaan:
+  - [x] Info header (pemasok, tanggal, dicatat oleh, catatan)
+  - [x] Tabel item yang diterima
 
 ### 3.7 Manajemen User (Kasir)
 
