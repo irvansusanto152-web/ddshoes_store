@@ -42,8 +42,8 @@ def dashboard_view(request):
 
     today = timezone.now().date()
 
-    # 1. Total Stock (active products)
-    total_stock_dict = Products.objects.filter(status='active').aggregate(total_stock=Sum('stock'))
+    # 1. Total Stock (all products)
+    total_stock_dict = Products.objects.aggregate(total_stock=Sum('stock'))
     total_stock = total_stock_dict['total_stock'] or 0
 
     # 2. Total Products Sold Today
@@ -54,9 +54,10 @@ def dashboard_view(request):
     revenue_today_dict = Transactions.objects.filter(transaction_date__date=today).aggregate(total_rev=Sum('total_amount'))
     revenue_today = revenue_today_dict['total_rev'] or 0
 
-    # 4. Low Stock Products
-    low_stock_products = Products.objects.filter(stock__lte=3, status='active').order_by('stock')
-    low_stock_count = low_stock_products.count()
+    # 4. Barang Masuk Hari Ini
+    # Menjumlahkan total qty dari detail barang masuk hari ini
+    stockin_today = StockIn.objects.filter(received_date=today)
+    total_barang_masuk = sum([sum([d.quantity for d in si.details.all()]) for si in stockin_today])
 
     # Top 5 best selling products
     top_products = Products.objects.annotate(total_sold=Sum('transactiondetails__quantity')).order_by('-total_sold')[:5]
@@ -65,8 +66,7 @@ def dashboard_view(request):
         'total_stock': total_stock,
         'total_sold_today': total_sold_today,
         'revenue_today': revenue_today,
-        'low_stock_count': low_stock_count,
-        'low_stock_products': low_stock_products,
+        'total_barang_masuk': total_barang_masuk,
         'top_products': top_products,
     }
 
@@ -80,27 +80,27 @@ def dashboard_chart_data(request):
     data = []
 
     if period == 'daily':
+        # Per jam hari ini
+        today = now.date()
+        for i in range(8, 23): # jam 08:00 sampai 22:00
+            start_time = timezone.make_aware(timezone.datetime(today.year, today.month, today.day, i, 0, 0))
+            end_time = start_time + timedelta(hours=1)
+            labels.append(f"{i:02d}:00")
+            rev = Transactions.objects.filter(transaction_date__gte=start_time, transaction_date__lt=end_time).aggregate(t=Sum('total_amount'))['t'] or 0
+            data.append(rev)
+    elif period == 'weekly':
+        # 7 hari terakhir
         for i in range(6, -1, -1):
             date = (now - timedelta(days=i)).date()
             labels.append(date.strftime('%b %d'))
             rev = Transactions.objects.filter(transaction_date__date=date).aggregate(t=Sum('total_amount'))['t'] or 0
             data.append(rev)
-    elif period == 'weekly':
-        for i in range(3, -1, -1):
-            start = (now - timedelta(weeks=i+1)).date()
-            end = (now - timedelta(weeks=i)).date()
-            labels.append(f"{start.strftime('%b %d')} - {end.strftime('%b %d')}")
-            rev = Transactions.objects.filter(transaction_date__date__gt=start, transaction_date__date__lte=end).aggregate(t=Sum('total_amount'))['t'] or 0
-            data.append(rev)
     elif period == 'monthly':
-        for i in range(5, -1, -1):
-            month = now.month - i
-            year = now.year
-            if month <= 0:
-                month += 12
-                year -= 1
-            labels.append(f"{month:02d}/{year}")
-            rev = Transactions.objects.filter(transaction_date__year=year, transaction_date__month=month).aggregate(t=Sum('total_amount'))['t'] or 0
+        # 30 hari terakhir
+        for i in range(29, -1, -1):
+            date = (now - timedelta(days=i)).date()
+            labels.append(date.strftime('%d %b'))
+            rev = Transactions.objects.filter(transaction_date__date=date).aggregate(t=Sum('total_amount'))['t'] or 0
             data.append(rev)
 
     return JsonResponse({'labels': labels, 'data': data})
@@ -533,7 +533,7 @@ def pos_page(request):
     brands = Brands.objects.all()
 
     # Embed initial product data to avoid extra AJAX request on first load
-    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(stock__gt=0).order_by('name')
     initial_products = []
     for p in qs:
         initial_products.append({
@@ -560,7 +560,7 @@ def pos_get_products(request):
     cat_id = request.GET.get('category_id')
     brand_id = request.GET.get('brand_id')
 
-    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(stock__gt=0).order_by('name')
     if query:
         qs = qs.filter(name__icontains=query)
     if cat_id:
