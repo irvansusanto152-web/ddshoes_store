@@ -97,23 +97,23 @@
 
 ### 3.1 Dashboard
 
-- [ ] Buat view `dashboard` (admin only)
-- [ ] Query data untuk 4 kartu metrik:
+- [x] Buat view `dashboard` (admin only)
+- [x] Query data untuk 4 kartu metrik:
   - Total Stok (Σ semua stok produk aktif)
   - Total Produk Terjual Hari Ini (dari TransactionDetails hari ini)
   - Pendapatan Hari Ini (Σ total_amount transaksi hari ini)
   - Stok Hampir Habis (produk dengan stok ≤ 3)
-- [ ] Query data grafik tren pendapatan (Harian / Mingguan / Bulanan) → kirim ke template sebagai JSON
-- [ ] Query 5 produk terlaris (berdasarkan total quantity terjual)
-- [ ] Query tabel stok kritis (stok ≤ 0 atau hampir habis)
-- [ ] Buat `dashboard.html`:
-  - [ ] 4 stat cards dengan tema warna berbeda (`.card-cat`, `.card-prod`, `.card-ord`, `.card-rev`)
-  - [ ] Layout 7:3 grid — chart panel kiri + leaderboard kanan (`.main-grid`)
-  - [ ] Chart.js line chart dengan gradient fill ungu-pink sesuai design_system
-  - [ ] Filter tabs Harian/Mingguan/Bulanan (AJAX update chart)
-  - [ ] Tabel 5 produk terlaris
-  - [ ] Tabel stok kritis (dengan badge warning)
-- [ ] Endpoint AJAX untuk update data chart berdasarkan filter periode
+- [x] Query data grafik tren pendapatan (Harian / Mingguan / Bulanan) → kirim ke template sebagai JSON
+- [x] Query 5 produk terlaris (berdasarkan total quantity terjual)
+- [x] Query tabel stok kritis (stok ≤ 0 atau hampir habis)
+- [x] Buat `dashboard.html`:
+  - [x] 4 stat cards dengan tema warna berbeda (`.card-cat`, `.card-prod`, `.card-ord`, `.card-rev`)
+  - [x] Layout 7:3 grid — chart panel kiri + leaderboard kanan (`.main-grid`)
+  - [x] Chart.js line chart dengan gradient fill ungu-pink sesuai design_system
+  - [x] Filter tabs Harian/Mingguan/Bulanan (AJAX update chart)
+  - [x] Tabel 5 produk terlaris
+  - [x] Tabel stok kritis (dengan badge warning)
+- [x] Endpoint AJAX untuk update data chart berdasarkan filter periode
 
 ### 3.2 Master Data — Merek (Brands)
 

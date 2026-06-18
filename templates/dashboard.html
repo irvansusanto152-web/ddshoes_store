@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - Admin{% endblock %}
+
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Dashboard</h2>
+        <p>Ringkasan performa toko hari ini.</p>
+    </div>
+</div>
+
+<!-- 4 Kartu Metrik -->
+<div class="stats-grid mb-4">
+    <div class="stat-card card-cat">
+        <i class="material-icons bg-icon" style="color:#8b5cf6;">inventory_2</i>
+        <div class="stat-header d-flex justify-content-between align-items-center">
+            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Total Stok</span>
+            <div class="icon-box ib-1"><i class="material-icons">inventory_2</i></div>
+        </div>
+        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ total_stock|intcomma }}</p></div>
+    </div>
+    
+    <div class="stat-card card-prod">
+        <i class="material-icons bg-icon" style="color:#10b981;">shopping_cart</i>
+        <div class="stat-header d-flex justify-content-between align-items-center">
+            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Terjual Hari Ini</span>
+            <div class="icon-box ib-2"><i class="material-icons">shopping_cart</i></div>
+        </div>
+        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ total_sold_today|intcomma }}</p></div>
+    </div>
+    
+    <div class="stat-card card-ord">
+        <i class="material-icons bg-icon" style="color:#0ea5e9;">account_balance_wallet</i>
+        <div class="stat-header d-flex justify-content-between align-items-center">
+            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Pendapatan Hari Ini</span>
+            <div class="icon-box ib-3"><i class="material-icons">account_balance_wallet</i></div>
+        </div>
+        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">Rp {{ revenue_today|intcomma }}</p></div>
+    </div>
+    
+    <div class="stat-card card-rev">
+        <i class="material-icons bg-icon" style="color:#f59e0b;">warning</i>
+        <div class="stat-header d-flex justify-content-between align-items-center">
+            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Stok Menipis</span>
+            <div class="icon-box ib-4"><i class="material-icons">warning</i></div>
+        </div>
+        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ low_stock_count|intcomma }}</p></div>
+    </div>
+</div>
+
+<!-- Layout Utama 7:3 -->
+<div class="main-grid">
+    <!-- Kiri: Chart -->
+    <div class="glass-panel">
+        <div class="panel-head">
+            <div class="d-flex align-items-center gap-3">
+                <div class="ph-icon" style="background: var(--grad-violet);"><i class="material-icons">trending_up</i></div>
+                <div class="ph-title">
+                    <h3>Tren Pendapatan</h3>
+                    <p>Statistik penjualan dari waktu ke waktu</p>
+                </div>
+            </div>
+            <div class="chart-filters">
+                <button class="filter-btn active" data-period="daily">Harian</button>
+                <button class="filter-btn" data-period="weekly">Mingguan</button>
+                <button class="filter-btn" data-period="monthly">Bulanan</button>
+            </div>
+        </div>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Kanan: Leaderboard & Low Stock -->
+    <div class="d-flex flex-column gap-3">
+        <!-- 5 Produk Terlaris -->
+        <div class="glass-panel">
+            <div class="panel-head mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ph-icon" style="background: var(--grad-emerald);"><i class="material-icons">star</i></div>
+                    <div class="ph-title">
+                        <h3>Top 5 Terlaris</h3>
+                        <p>Produk paling banyak dibeli</p>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-borderless table-sm mb-0">
+                    <tbody>
+                        {% for p in top_products %}
+                        <tr>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center">
+                                    <div style="width: 35px; height: 35px; border-radius: 8px; overflow: hidden; background: #f1f5f9; margin-right: 10px;">
+                                        {% if p.image %}
+                                        <img src="{{ p.image.url }}" alt="Img" style="width: 100%; height: 100%; object-fit: cover;">
+                                        {% else %}
+                                        <i class="material-icons text-muted" style="line-height: 35px; text-align: center; display: block;">image</i>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0" style="font-size: 0.85rem; font-weight: 700;">{{ p.name }}</h6>
+                                        <small class="text-muted" style="font-size: 0.7rem;">{{ p.size }} | {{ p.brand.name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="align-middle text-end">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-weight: 600;">{{ p.total_sold|default:0|intcomma }} terjual</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted" style="font-size: 0.8rem; padding: 20px;">Belum ada data penjualan.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stok Kritis -->
+        <div class="glass-panel">
+            <div class="panel-head mb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ph-icon" style="background: var(--grad-amber);"><i class="material-icons">warning_amber</i></div>
+                    <div class="ph-title">
+                        <h3>Stok Kritis</h3>
+                        <p>Sisa stok ≤ 3</p>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="table table-borderless table-sm mb-0">
+                    <tbody>
+                        {% for p in low_stock_products %}
+                        <tr>
+                            <td class="align-middle">
+                                <h6 class="mb-0" style="font-size: 0.85rem; font-weight: 600; color: #334155;">{{ p.name }}</h6>
+                                <small class="text-muted" style="font-size: 0.7rem;">{{ p.size }}</small>
+                            </td>
+                            <td class="align-middle text-end">
+                                {% if p.stock <= 0 %}
+                                <span class="badge bg-danger-subtle text-danger rounded-pill px-2" style="font-size: 0.75rem;">Habis</span>
+                                {% else %}
+                                <span class="badge bg-warning-subtle text-warning rounded-pill px-2" style="font-size: 0.75rem;">Sisa {{ p.stock }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted" style="font-size: 0.8rem; padding: 20px;">Semua stok aman.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let revenueChart = null;
+
+    function initChart(labels, data) {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        
+        // Gradient fill
+        const gradientFill = ctx.createLinearGradient(0, 0, 0, 280);
+        gradientFill.addColorStop(0,   'rgba(99,102,241,0.55)');
+        gradientFill.addColorStop(0.5, 'rgba(236,72,153,0.18)');
+        gradientFill.addColorStop(1,   'rgba(255,255,255,0)');
+
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Pendapatan',
+                    data: data,
+                    borderColor: '#6366f1', 
+                    borderWidth: 3,
+                    backgroundColor: gradientFill,
+                    fill: true, 
+                    tension: 0.4,
+                    pointRadius: 0, 
+                    pointHoverRadius: 7,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#ec4899', 
+                    pointBorderWidth: 2.5,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15,23,42,0.9)',
+                        titleColor: '#f8fafc', bodyColor: '#fff',
+                        padding: 12, cornerRadius: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let value = context.raw || 0;
+                                return ' Rp ' + value.toLocaleString('id-ID');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { 
+                        beginAtZero: true,
+                        border: { display: false },
+                        ticks: {
+                            callback: function(value) {
+                                if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'M';
+                                if (value >= 1000) return 'Rp ' + (value / 1000) + 'K';
+                                return 'Rp ' + value;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function loadChartData(period) {
+        $.ajax({
+            url: "{% url 'dashboard_chart_data' %}",
+            data: { period: period },
+            success: function(res) {
+                initChart(res.labels, res.data);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        // Init chart with daily data
+        loadChartData('daily');
+
+        // Filter button clicks
+        $('.filter-btn').click(function() {
+            $('.filter-btn').removeClass('active');
+            $(this).addClass('active');
+            let period = $(this).data('period');
+            loadChartData(period);
+        });
+    });
+</script>
+{% endblock %}
