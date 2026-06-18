@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Master Data - Kategori{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Kategori Produk</h2>
+        <p>Kelola data kategori sepatu.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-primary btn-masuk" id="btn-add-category">
+            <i class="material-icons me-1">add</i> Tambah Kategori
+        </button>
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="saas-toolbar mb-3">
+        <div class="st-search" style="position: relative;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-category" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari kategori...">
+        </div>
+    </div>
+    
+    <div class="row" id="category-grid">
+        {% for c in categories %}
+        <div class="col-md-4 col-sm-6 mb-3 category-item">
+            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: rgba(255,255,255,0.7); backdrop-filter: blur(10px);">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="fw-bold mb-0 text-dark category-name">{{ c.name }}</h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-light rounded-circle border" type="button" data-bs-toggle="dropdown" style="width:32px; height:32px; padding:0;">
+                                <i class="material-icons text-secondary" style="font-size: 18px; line-height: 30px;">more_vert</i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li><a class="dropdown-item btn-edit-category d-flex align-items-center" href="javascript:void(0)" data-id="{{ c.id }}"><i class="material-icons me-2 text-primary" style="font-size: 18px;">edit</i> Ubah</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item btn-delete-category d-flex align-items-center text-danger" href="javascript:void(0)" data-id="{{ c.id }}"><i class="material-icons me-2" style="font-size: 18px;">delete</i> Hapus</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-auto pt-3">
+                        <span class="badge bg-primary-subtle text-primary border rounded-pill px-3">{{ c.product_count }} produk</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center text-muted py-5">
+            <i class="material-icons mb-2" style="font-size: 48px; color: #cbd5e1;">category</i>
+            <p>Belum ada data kategori.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search
+        $("#search-category").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".category-item").filter(function() {
+                $(this).toggle($(this).find('.category-name').text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+
+        // Add
+        $('#btn-add-category').click(function(){
+            uni_modal("Tambah Kategori Baru", "{% url 'categories_save' %}");
+        });
+
+        // Edit
+        $('.btn-edit-category').click(function(){
+            uni_modal("Ubah Data Kategori", "{% url 'categories_save' %}?id=" + $(this).data('id'));
+        });
+
+        // Delete
+        $('.btn-delete-category').click(function(){
+            _conf("Apakah Anda yakin ingin menghapus kategori ini?", "delete_category", [$(this).data('id')]);
+        });
+    });
+
+    function delete_category($id) {
+        start_loader();
+        $.ajax({
+            url: "{% url 'categories_delete' %}",
+            method: "POST",
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: { id: $id },
+            success: function(resp) {
+                if(resp.status == 'success') {
+                    location.reload();
+                } else {
+                    alert("Gagal menghapus data.");
+                    end_loader();
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

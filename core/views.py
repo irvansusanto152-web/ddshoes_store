@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import timedelta
-from .models import Products, Transactions, TransactionDetails
+from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -100,3 +100,112 @@ def dashboard_chart_data(request):
             data.append(rev)
 
     return JsonResponse({'labels': labels, 'data': data})
+
+# --- BRANDS ---
+@login_required
+def brands_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    brands = Brands.objects.annotate(product_count=Count('products')).order_by('name')
+    return render(request, 'brands.html', {'brands': brands})
+
+@login_required
+def brands_save(request):
+    if request.method == 'POST':
+        id = request.POST.get('id', '')
+        name = request.POST.get('name', '')
+        if id:
+            brand = Brands.objects.get(id=id)
+            brand.name = name
+            brand.save()
+            messages.success(request, "Merek berhasil diubah.")
+        else:
+            Brands.objects.create(name=name)
+            messages.success(request, "Merek berhasil ditambahkan.")
+        return JsonResponse({'status': 'success'})
+    
+    id = request.GET.get('id', '')
+    brand = Brands.objects.get(id=id) if id else None
+    return render(request, 'brands_form.html', {'brand': brand})
+
+@login_required
+def brands_delete(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        Brands.objects.get(id=id).delete()
+        messages.success(request, "Merek berhasil dihapus.")
+        return JsonResponse({'status': 'success'})
+
+# --- CATEGORIES ---
+@login_required
+def categories_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    categories = Categories.objects.annotate(product_count=Count('products')).order_by('name')
+    return render(request, 'categories.html', {'categories': categories})
+
+@login_required
+def categories_save(request):
+    if request.method == 'POST':
+        id = request.POST.get('id', '')
+        name = request.POST.get('name', '')
+        if id:
+            cat = Categories.objects.get(id=id)
+            cat.name = name
+            cat.save()
+            messages.success(request, "Kategori berhasil diubah.")
+        else:
+            Categories.objects.create(name=name)
+            messages.success(request, "Kategori berhasil ditambahkan.")
+        return JsonResponse({'status': 'success'})
+    
+    id = request.GET.get('id', '')
+    category = Categories.objects.get(id=id) if id else None
+    return render(request, 'categories_form.html', {'category': category})
+
+@login_required
+def categories_delete(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        Categories.objects.get(id=id).delete()
+        messages.success(request, "Kategori berhasil dihapus.")
+        return JsonResponse({'status': 'success'})
+
+# --- SUPPLIERS ---
+@login_required
+def suppliers_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    suppliers = Suppliers.objects.all().order_by('name')
+    return render(request, 'suppliers.html', {'suppliers': suppliers})
+
+@login_required
+def suppliers_save(request):
+    if request.method == 'POST':
+        id = request.POST.get('id', '')
+        name = request.POST.get('name', '')
+        phone = request.POST.get('phone', '')
+        notes = request.POST.get('notes', '')
+        if id:
+            sup = Suppliers.objects.get(id=id)
+            sup.name = name
+            sup.phone = phone
+            sup.notes = notes
+            sup.save()
+            messages.success(request, "Pemasok berhasil diubah.")
+        else:
+            Suppliers.objects.create(name=name, phone=phone, notes=notes)
+            messages.success(request, "Pemasok berhasil ditambahkan.")
+        return JsonResponse({'status': 'success'})
+    
+    id = request.GET.get('id', '')
+    supplier = Suppliers.objects.get(id=id) if id else None
+    return render(request, 'suppliers_form.html', {'supplier': supplier})
+
+@login_required
+def suppliers_delete(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        Suppliers.objects.get(id=id).delete()
+        messages.success(request, "Pemasok berhasil dihapus.")
+        return JsonResponse({'status': 'success'})

@@ -117,36 +117,36 @@
 
 ### 3.2 Master Data — Merek (Brands)
 
-- [ ] Buat view `brands_list`, `brands_save`, `brands_delete`
-- [ ] Buat `brands.html`:
-  - [ ] Page header (`.saas-header`) dengan judul + tombol "Tambah Merek"
-  - [ ] Toolbar pencarian (`.saas-toolbar`) — filter real-time
-  - [ ] Tabel daftar merek (nama, jumlah produk terkait, aksi)
-  - [ ] Tombol Edit → buka `uni_modal` dengan form edit (AJAX load)
-  - [ ] Tombol Hapus → buka `confirm_modal` → AJAX delete
-  - [ ] Form tambah/edit merek (via modal)
-- [ ] Response JSON standar untuk semua AJAX: `{ "status": "success" }` / `{ "status": "failed", "msg": "..." }`
+- [x] Buat view `brands_list`, `brands_save`, `brands_delete`
+- [x] Buat `brands.html`:
+  - [x] Page header (`.saas-header`) dengan judul + tombol "Tambah Merek"
+  - [x] Toolbar pencarian (`.saas-toolbar`) — filter real-time
+  - [x] Tabel daftar merek (nama, jumlah produk terkait, aksi)
+  - [x] Tombol Edit → buka `uni_modal` dengan form edit (AJAX load)
+  - [x] Tombol Hapus → buka `confirm_modal` → AJAX delete
+  - [x] Form tambah/edit merek (via modal)
+- [x] Response JSON standar untuk semua AJAX: `{ "status": "success" }` / `{ "status": "failed", "msg": "..." }`
 
 ### 3.3 Master Data — Kategori
 
-- [ ] Buat view `categories_list`, `categories_save`, `categories_delete`
-- [ ] Buat `categories.html`:
-  - [ ] Page header + tombol "Tambah Kategori"
-  - [ ] Toolbar pencarian + filter
-  - [ ] Card grid (`.card-grid`) — tampilan kartu per kategori
-  - [ ] Setiap kartu: nama kategori, jumlah produk, badge status aktif/nonaktif
-  - [ ] Tombol edit & hapus di setiap kartu (`.btn-icon-edit`, `.btn-icon-delete`)
-  - [ ] Form tambah/edit via `uni_modal`
+- [x] Buat view `categories_list`, `categories_save`, `categories_delete`
+- [x] Buat `categories.html`:
+  - [x] Page header + tombol "Tambah Kategori"
+  - [x] Toolbar pencarian + filter
+  - [x] Card grid (`.card-grid`) — tampilan kartu per kategori
+  - [x] Setiap kartu: nama kategori, jumlah produk, badge status aktif/nonaktif
+  - [x] Tombol edit & hapus di setiap kartu (`.btn-icon-edit`, `.btn-icon-delete`)
+  - [x] Form tambah/edit via `uni_modal`
 
 ### 3.4 Master Data — Pemasok (Suppliers)
 
-- [ ] Buat view `suppliers_list`, `suppliers_save`, `suppliers_delete`
-- [ ] Buat `suppliers.html`:
-  - [ ] Page header + tombol "Tambah Pemasok"
-  - [ ] Toolbar pencarian
-  - [ ] Tabel daftar pemasok (nama, no. HP, keterangan, aksi)
-  - [ ] Form tambah/edit via `uni_modal` (field: nama, HP, catatan)
-  - [ ] Konfirmasi hapus via `confirm_modal`
+- [x] Buat view `suppliers_list`, `suppliers_save`, `suppliers_delete`
+- [x] Buat `suppliers.html`:
+  - [x] Page header + tombol "Tambah Pemasok"
+  - [x] Toolbar pencarian
+  - [x] Tabel daftar pemasok (nama, no. HP, keterangan, aksi)
+  - [x] Form tambah/edit via `uni_modal` (field: nama, HP, catatan)
+  - [x] Konfirmasi hapus via `confirm_modal`
 
 ### 3.5 Katalog Produk (Inventory)
 

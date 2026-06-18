@@ -1,0 +1,48 @@
+<div class="container-fluid">
+    <form action="" id="supplier-form">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ supplier.id|default:'' }}">
+        
+        <div class="form-group mb-3">
+            <label for="name" class="control-label mb-1 fw-bold text-secondary">Nama Pemasok</label>
+            <input type="text" name="name" id="name" class="form-control saas-input" value="{{ supplier.name|default:'' }}" required placeholder="Contoh: Pak Budi Pasar">
+        </div>
+        
+        <div class="form-group mb-3">
+            <label for="phone" class="control-label mb-1 fw-bold text-secondary">Nomor HP</label>
+            <input type="text" name="phone" id="phone" class="form-control saas-input" value="{{ supplier.phone|default:'' }}" placeholder="Contoh: 08123456789">
+        </div>
+        
+        <div class="form-group mb-3">
+            <label for="notes" class="control-label mb-1 fw-bold text-secondary">Keterangan Tambahan</label>
+            <textarea name="notes" id="notes" rows="3" class="form-control saas-input" placeholder="Alamat atau detail lainnya...">{{ supplier.notes|default:'' }}</textarea>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        $('#supplier-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this);
+            start_loader();
+            $.ajax({
+                url: "{% url 'suppliers_save' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(resp) {
+                    if (resp.status == 'success') {
+                        location.reload();
+                    } else {
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                        end_loader();
+                    }
+                }
+            });
+        });
+    });
+</script>

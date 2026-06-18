@@ -1,0 +1,37 @@
+<div class="container-fluid">
+    <form action="" id="brand-form">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ brand.id|default:'' }}">
+        <div class="form-group mb-3">
+            <label for="name" class="control-label mb-1 fw-bold text-secondary">Nama Merek</label>
+            <input type="text" name="name" id="name" class="form-control form-control-lg saas-input" value="{{ brand.name|default:'' }}" required placeholder="Contoh: Nike">
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        $('#brand-form').submit(function(e) {
+            e.preventDefault();
+            var _this = $(this);
+            start_loader();
+            $.ajax({
+                url: "{% url 'brands_save' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(resp) {
+                    if (resp.status == 'success') {
+                        location.reload();
+                    } else {
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                        end_loader();
+                    }
+                }
+            });
+        });
+    });
+</script>

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block title %}Master Data - Pemasok{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Pemasok (Suppliers)</h2>
+        <p>Kelola data penyuplai / vendor produk.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-primary btn-masuk" id="btn-add-supplier">
+            <i class="material-icons me-1">add</i> Tambah Pemasok
+        </button>
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="saas-toolbar mb-3">
+        <div class="st-search" style="position: relative;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-supplier" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari nama pemasok...">
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table" id="supplier-table">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Nama Pemasok</th>
+                    <th>No. HP</th>
+                    <th>Keterangan</th>
+                    <th width="15%" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in suppliers %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #334155;">{{ s.name }}</td>
+                    <td>{{ s.phone|default:'-' }}</td>
+                    <td class="text-muted text-truncate" style="max-width: 250px;">{{ s.notes|default:'-' }}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-light btn-edit-supplier rounded-circle border me-1" data-id="{{ s.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        </button>
+                        <button class="btn btn-sm btn-light btn-delete-supplier rounded-circle border" data-id="{{ s.id }}" title="Hapus" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-danger" style="font-size: 16px; line-height: 30px;">delete</i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Belum ada data pemasok.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search
+        $("#search-supplier").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#supplier-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) { // exclude empty message
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
+        });
+
+        // Add
+        $('#btn-add-supplier').click(function(){
+            uni_modal("Tambah Pemasok Baru", "{% url 'suppliers_save' %}");
+        });
+
+        // Edit
+        $('.btn-edit-supplier').click(function(){
+            uni_modal("Ubah Data Pemasok", "{% url 'suppliers_save' %}?id=" + $(this).data('id'));
+        });
+
+        // Delete
+        $('.btn-delete-supplier').click(function(){
+            _conf("Apakah Anda yakin ingin menghapus pemasok ini?", "delete_supplier", [$(this).data('id')]);
+        });
+    });
+
+    function delete_supplier($id) {
+        start_loader();
+        $.ajax({
+            url: "{% url 'suppliers_delete' %}",
+            method: "POST",
+            headers: {'X-CSRFToken': '{{ csrf_token }}'},
+            data: { id: $id },
+            success: function(resp) {
+                if(resp.status == 'success') {
+                    location.reload();
+                } else {
+                    alert("Gagal menghapus data.");
+                    end_loader();
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}
