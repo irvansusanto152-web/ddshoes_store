@@ -40,6 +40,7 @@ urlpatterns = [
 
     # Reports & Closing (Admin)
     path('sales-report/', views.sales_report, name='sales_report'),
+    path('transactions/<int:pk>/detail/', views.transaction_detail, name='transaction_detail'),
     path('inventory-report/', views.inventory_report, name='inventory_report'),
     path('closing-admin/', views.closing_admin, name='closing_admin'),
 

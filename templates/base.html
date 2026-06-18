@@ -1,13 +1,16 @@
 {% load static %}
+{% if not 'HTTP_HX_REQUEST' in request.META %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+{% endif %}
     <title>{% block title %}DD Shoes POS{% endblock %}</title>
+{% if not 'HTTP_HX_REQUEST' in request.META %}
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <!-- CSS Framework -->
@@ -18,8 +21,23 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body class="sidebar-open">
+    <!-- NProgress for HTMX Loading -->
+    <link rel="stylesheet" href="https://unpkg.com/nprogress@0.2.0/nprogress.css" />
+    <script src="https://unpkg.com/nprogress@0.2.0/nprogress.js"></script>
+    <style>
+        #nprogress .bar { background: #6366f1 !important; height: 3px !important; }
+        #nprogress .peg { box-shadow: 0 0 10px #6366f1, 0 0 5px #6366f1 !important; }
+        #nprogress .spinner-icon { border-top-color: #6366f1 !important; border-left-color: #6366f1 !important; }
+    </style>
+    <script>
+        document.body.addEventListener('htmx:configRequest', function() { NProgress.start(); });
+        document.body.addEventListener('htmx:afterOnLoad', function() { NProgress.done(); });
+    </script>
     <!-- Preloader -->
     <script>
         // Dummy preloader start
@@ -38,9 +56,13 @@
             <!-- Page Content -->
             <div class="page-wrapper">
                 <main class="content-wrapper">
-                    <div class="mdc-layout-grid">
+                    <div class="mdc-layout-grid" id="main-content">
                         <div class="mdc-layout-grid__inner">
+{% endif %}
+
                             {% block pageContent %}{% endblock %}
+
+{% if not 'HTTP_HX_REQUEST' in request.META %}
                         </div>
                     </div>
                 </main>
@@ -76,6 +98,22 @@
                 <div class="modal-footer">
                     <button class="btn btn-sm btn-primary rounded-0" id="confirm">Continue</button>
                     <button class="btn btn-sm btn-secondary rounded-0" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS Alert Modal -->
+    <div class="modal fade" id="custom_alert_modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0 shadow-lg" style="overflow:hidden;">
+                <div class="modal-body text-center p-4">
+                    <div id="custom_alert_icon_ring" class="mx-auto mb-3 d-flex align-items-center justify-content-center rounded-circle" style="width:64px;height:64px;background:#e0e7ff;color:#4f46e5;">
+                        <i class="material-icons" style="font-size:32px;" id="custom_alert_icon">info</i>
+                    </div>
+                    <h5 class="fw-bold mb-2" id="custom_alert_title">Pemberitahuan</h5>
+                    <p class="text-muted mb-4" id="custom_alert_message" style="font-size:0.9rem;"></p>
+                    <button class="btn btn-primary w-100 rounded-pill fw-bold" data-bs-dismiss="modal">Mengerti</button>
                 </div>
             </div>
         </div>
@@ -134,6 +172,23 @@
             $('#confirm_modal').modal('show');
         };
 
+        // Custom alert: showAlert(msg, type) — type: 'info','success','danger'
+        window.showAlert = function(msg, type) {
+            type = type || 'info';
+            const configs = {
+                info:    { bg:'#e0e7ff', color:'#4f46e5', icon:'info',     title:'Pemberitahuan' },
+                success: { bg:'#dcfce7', color:'#16a34a', icon:'check_circle', title:'Berhasil!' },
+                danger:  { bg:'#fee2e2', color:'#dc2626', icon:'error',     title:'Gagal!' },
+                warning: { bg:'#fef9c3', color:'#ca8a04', icon:'warning',   title:'Peringatan' },
+            };
+            const c = configs[type] || configs.info;
+            $('#custom_alert_icon_ring').css({ background: c.bg, color: c.color });
+            $('#custom_alert_icon').text(c.icon);
+            $('#custom_alert_title').text(c.title);
+            $('#custom_alert_message').html(msg);
+            $('#custom_alert_modal').modal('show');
+        };
+
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('mainSidebar');
             if (sidebar.classList.contains('sidebar-collapsed')) {
@@ -150,7 +205,24 @@
         $(document).ready(function() {
             end_loader();
         });
+
+        // Update active sidebar link after HTMX swap
+        document.body.addEventListener('htmx:afterSwap', function(event) {
+            if (event.detail.target.id === 'main-content') {
+                const currentPath = window.location.pathname;
+                $('.mdc-drawer-link').removeClass('active');
+                $('.mdc-drawer-link').each(function() {
+                    const linkUrl = $(this).attr('hx-get');
+                    if (linkUrl && currentPath === linkUrl) {
+                        $(this).addClass('active');
+                    }
+                });
+            }
+        });
     </script>
+{% endif %}
     {% block extra_js %}{% endblock %}
+{% if not 'HTTP_HX_REQUEST' in request.META %}
 </body>
 </html>
+{% endif %}

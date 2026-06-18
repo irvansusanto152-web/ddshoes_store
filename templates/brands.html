@@ -34,20 +34,27 @@
             <tbody>
                 {% for b in brands %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold" style="color: #334155;">{{ b.name }}</td>
-                    <td><span class="badge bg-light text-dark border rounded-pill px-3">{{ b.product_count }} produk</span></td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ b.name }}</td>
+                    <td><span class="badge-glass badge-dark">{{ b.product_count }} produk</span></td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-light btn-edit-brand rounded-circle border me-1" data-id="{{ b.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        <button class="btn-action btn-action-edit me-1 btn-edit-brand" data-id="{{ b.id }}" title="Edit">
+                            <i class="material-icons">edit</i>
                         </button>
-                        <button class="btn btn-sm btn-light btn-delete-brand rounded-circle border" data-id="{{ b.id }}" title="Hapus" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-danger" style="font-size: 16px; line-height: 30px;">delete</i>
+                        <button class="btn-action btn-action-delete btn-delete-brand" data-id="{{ b.id }}" title="Hapus">
+                            <i class="material-icons">delete</i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="4" class="text-center text-muted py-4">Belum ada data merek.</td></tr>
+                <tr>
+                    <td colspan="4">
+                        <div class="empty-state">
+                            <i class="material-icons">sell</i>
+                            <p>Belum ada data merek.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -57,9 +64,9 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
+    (function($) {
         // Search
-        $("#search-brand").on("keyup", function() {
+        $("#search-brand").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#brand-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
@@ -69,37 +76,37 @@
         });
 
         // Add
-        $('#btn-add-brand').click(function(){
+        $('#btn-add-brand').off("click").on("click", function(){
             uni_modal("Tambah Merek Baru", "{% url 'brands_save' %}");
         });
 
         // Edit
-        $('.btn-edit-brand').click(function(){
+        $('.btn-edit-brand').off("click").on("click", function(){
             uni_modal("Ubah Data Merek", "{% url 'brands_save' %}?id=" + $(this).data('id'));
         });
 
         // Delete
-        $('.btn-delete-brand').click(function(){
+        $('.btn-delete-brand').off("click").on("click", function(){
             _conf("Apakah Anda yakin ingin menghapus merek ini?", "delete_brand", [$(this).data('id')]);
         });
-    });
 
-    function delete_brand($id) {
-        start_loader();
-        $.ajax({
-            url: "{% url 'brands_delete' %}",
-            method: "POST",
-            headers: {'X-CSRFToken': '{{ csrf_token }}'},
-            data: { id: $id },
-            success: function(resp) {
-                if(resp.status == 'success') {
-                    location.reload();
-                } else {
-                    alert("Gagal menghapus data.");
-                    end_loader();
+        window.delete_brand = function($id) {
+            start_loader();
+            $.ajax({
+                url: "{% url 'brands_delete' %}",
+                method: "POST",
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                data: { id: $id },
+                success: function(resp) {
+                    if(resp.status == 'success') {
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                    } else {
+                        showAlert("Gagal menghapus data.");
+                        end_loader();
+                    }
                 }
-            }
-        });
-    }
+            });
+        };
+    })(jQuery);
 </script>
 {% endblock %}

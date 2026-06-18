@@ -51,51 +51,58 @@
             <tbody>
                 {% for p in products %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
                     <td>
-                        <div style="width: 45px; height: 45px; border-radius: 8px; overflow: hidden; background: #f1f5f9;">
+                        <div style="width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #f1f5f9; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
                             {% if p.image %}
                             <img src="{{ p.image.url }}" alt="Img" style="width: 100%; height: 100%; object-fit: cover;">
                             {% else %}
-                            <i class="material-icons text-muted" style="line-height: 45px; text-align: center; display: block;">image</i>
+                            <i class="material-icons text-muted" style="line-height: 48px; text-align: center; display: block; font-size: 24px;">image</i>
                             {% endif %}
                         </div>
                     </td>
                     <td>
-                        <h6 class="mb-0 fw-bold" style="color: #334155;">{{ p.name }}</h6>
-                        <small class="text-muted">{{ p.brand.name }} | {{ p.category.name }} | {{ p.size }}</small>
+                        <h6 class="mb-1 fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ p.name }}</h6>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">{{ p.brand.name }} &bull; {{ p.category.name }} &bull; Size {{ p.size }}</small>
                     </td>
-                    <td><span class="badge bg-light text-dark border">{{ p.condition }}</span></td>
-                    <td class="text-end text-muted"><small>Rp {{ p.buy_price|intcomma }}</small></td>
-                    <td class="text-end fw-bold text-success">Rp {{ p.sell_price|intcomma }}</td>
+                    <td><span class="badge-glass badge-dark">{{ p.condition }}</span></td>
+                    <td class="text-end text-muted"><small style="font-size: 0.8rem;">Rp {{ p.buy_price|intcomma }}</small></td>
+                    <td class="text-end fw-bold text-success" style="font-size: 0.95rem;">Rp {{ p.sell_price|intcomma }}</td>
                     <td class="text-center">
                         {% if p.stock <= 3 %}
-                            <span class="badge bg-danger-subtle text-danger rounded-pill px-2">{{ p.stock }}</span>
+                            <span class="badge-glass badge-danger">{{ p.stock }}</span>
                         {% else %}
-                            <span class="badge bg-secondary-subtle text-secondary rounded-pill px-2">{{ p.stock }}</span>
+                            <span class="badge-glass badge-dark">{{ p.stock }}</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
                         {% if p.status == 'active' %}
-                            <span class="badge bg-success status-badge">Active</span>
+                            <span class="badge-glass badge-active">Active</span>
                         {% else %}
-                            <span class="badge bg-danger status-badge">Inactive</span>
+                            <span class="badge-glass badge-inactive">Inactive</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-light btn-toggle-status rounded-circle border me-1" data-id="{{ p.id }}" title="Toggle Status" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-warning" style="font-size: 16px; line-height: 30px;">power_settings_new</i>
+                        <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ p.id }}" title="Toggle Status">
+                            <i class="material-icons">power_settings_new</i>
                         </button>
-                        <button class="btn btn-sm btn-light btn-edit-product rounded-circle border me-1" data-id="{{ p.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        <button class="btn-action btn-action-edit me-1 btn-edit-product" data-id="{{ p.id }}" title="Edit">
+                            <i class="material-icons">edit</i>
                         </button>
-                        <button class="btn btn-sm btn-light btn-delete-product rounded-circle border" data-id="{{ p.id }}" title="Hapus" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-danger" style="font-size: 16px; line-height: 30px;">delete</i>
+                        <button class="btn-action btn-action-delete btn-delete-product" data-id="{{ p.id }}" title="Hapus">
+                            <i class="material-icons">delete</i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="9" class="text-center text-muted py-4">Belum ada data produk.</td></tr>
+                <tr>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="material-icons">inventory_2</i>
+                            <p>Belum ada data produk.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -105,13 +112,13 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
+    (function($) {
         // Search
-        $("#search-product").on("keyup", function() {
+        $("#search-product").off("keyup").on("keyup", function() {
             filterTable();
         });
 
-        $("#filter-status").on("change", function() {
+        $("#filter-status").off("change").on("change", function() {
             filterTable();
         });
 
@@ -132,22 +139,22 @@
         }
 
         // Add
-        $('#btn-add-product').click(function(){
+        $('#btn-add-product').off("click").on("click", function(){
             uni_modal("Tambah Produk Baru", "{% url 'products_save' %}", 'modal-lg');
         });
 
         // Edit
-        $('.btn-edit-product').click(function(){
+        $('.btn-edit-product').off("click").on("click", function(){
             uni_modal("Ubah Data Produk", "{% url 'products_save' %}?id=" + $(this).data('id'), 'modal-lg');
         });
 
         // Delete
-        $('.btn-delete-product').click(function(){
+        $('.btn-delete-product').off("click").on("click", function(){
             _conf("Apakah Anda yakin ingin menghapus produk ini?", "delete_product", [$(this).data('id')]);
         });
 
         // Toggle
-        $('.btn-toggle-status').click(function(){
+        $('.btn-toggle-status').off("click").on("click", function(){
             start_loader();
             $.ajax({
                 url: "{% url 'products_toggle_status' %}",
@@ -156,32 +163,32 @@
                 data: { id: $(this).data('id') },
                 success: function(resp) {
                     if(resp.status == 'success') {
-                        location.reload();
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
                     } else {
-                        alert("Gagal merubah status.");
+                        showAlert("Gagal merubah status.");
                         end_loader();
                     }
                 }
             });
         });
-    });
 
-    function delete_product($id) {
-        start_loader();
-        $.ajax({
-            url: "{% url 'products_delete' %}",
-            method: "POST",
-            headers: {'X-CSRFToken': '{{ csrf_token }}'},
-            data: { id: $id },
-            success: function(resp) {
-                if(resp.status == 'success') {
-                    location.reload();
-                } else {
-                    alert("Gagal menghapus data.");
-                    end_loader();
+        window.delete_product = function($id) {
+            start_loader();
+            $.ajax({
+                url: "{% url 'products_delete' %}",
+                method: "POST",
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                data: { id: $id },
+                success: function(resp) {
+                    if(resp.status == 'success') {
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                    } else {
+                        showAlert("Gagal menghapus data.");
+                        end_loader();
+                    }
                 }
-            }
-        });
-    }
+            });
+        };
+    })(jQuery);
 </script>
 {% endblock %}

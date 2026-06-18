@@ -1,0 +1,68 @@
+{% load humanize %}
+<div class="container-fluid p-0">
+    <div class="row mb-3 pb-3 border-bottom">
+        <div class="col-md-6">
+            <p class="mb-1 text-muted" style="font-size:0.85rem;">Tanggal Waktu</p>
+            <h6 class="fw-bold">{{ t.transaction_date|date:"d M Y, H:i" }}</h6>
+        </div>
+        <div class="col-md-6 text-end">
+            <p class="mb-1 text-muted" style="font-size:0.85rem;">Kasir</p>
+            <h6 class="fw-bold">{{ t.cashier.username|title }}</h6>
+        </div>
+    </div>
+    
+    <div class="table-responsive mb-3">
+        <table class="table table-sm saas-table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%">No</th>
+                    <th>Produk</th>
+                    <th class="text-end">Harga</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in t.details.all %}
+                <tr>
+                    <td class="text-muted text-center fw-bold">{{ forloop.counter }}</td>
+                    <td>
+                        <h6 class="mb-0 fw-bold" style="font-size:0.9rem; color: #1e293b;">{{ item.product.name }}</h6>
+                        <small class="text-muted">{{ item.product.size }} | {{ item.product.brand.name }}</small>
+                    </td>
+                    <td class="text-end text-muted align-middle">Rp {{ item.sell_price|intcomma }}</td>
+                    <td class="text-center fw-bold align-middle">{{ item.quantity }}</td>
+                    <td class="text-end fw-bold align-middle" style="color:#6366f1;">Rp {{ item.subtotal|intcomma }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="p-3 rounded-3" style="background:#f8fafc; border:1px solid #e2e8f0;">
+        <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Metode Pembayaran</span>
+            <span class="fw-bold text-uppercase">{{ t.payment_method }}</span>
+        </div>
+        <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Total Belanja</span>
+            <span class="fw-bold">Rp {{ t.total_amount|intcomma }}</span>
+        </div>
+        {% if t.payment_method == 'tunai' %}
+        <div class="d-flex justify-content-between mb-1">
+            <span class="text-muted">Tunai Diterima</span>
+            <span class="fw-bold">Rp {{ t.cash_received|intcomma }}</span>
+        </div>
+        <div class="d-flex justify-content-between mt-2 pt-2 border-top">
+            <span class="fw-bold" style="color:#10b981;">Kembalian</span>
+            <span class="fw-bold text-success fs-5">Rp {{ t.change_amount|intcomma }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="mt-4 text-center">
+        <button class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+        <!-- Print Button (Untuk dikembangkan nanti) -->
+        <button class="btn btn-primary rounded-pill px-4 ms-2" onclick="window.print()"><i class="material-icons align-middle me-1" style="font-size:18px;">print</i> Cetak Struk</button>
+    </div>
+</div>

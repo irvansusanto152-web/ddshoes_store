@@ -35,21 +35,28 @@
             <tbody>
                 {% for s in suppliers %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold" style="color: #334155;">{{ s.name }}</td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ s.name }}</td>
                     <td>{{ s.phone|default:'-' }}</td>
                     <td class="text-muted text-truncate" style="max-width: 250px;">{{ s.notes|default:'-' }}</td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-light btn-edit-supplier rounded-circle border me-1" data-id="{{ s.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        <button class="btn-action btn-action-edit me-1 btn-edit-supplier" data-id="{{ s.id }}" title="Edit">
+                            <i class="material-icons">edit</i>
                         </button>
-                        <button class="btn btn-sm btn-light btn-delete-supplier rounded-circle border" data-id="{{ s.id }}" title="Hapus" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-danger" style="font-size: 16px; line-height: 30px;">delete</i>
+                        <button class="btn-action btn-action-delete btn-delete-supplier" data-id="{{ s.id }}" title="Hapus">
+                            <i class="material-icons">delete</i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="5" class="text-center text-muted py-4">Belum ada data pemasok.</td></tr>
+                <tr>
+                    <td colspan="5">
+                        <div class="empty-state">
+                            <i class="material-icons">local_shipping</i>
+                            <p>Belum ada data pemasok.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -59,9 +66,9 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
+    (function($) {
         // Search
-        $("#search-supplier").on("keyup", function() {
+        $("#search-supplier").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#supplier-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
@@ -71,37 +78,37 @@
         });
 
         // Add
-        $('#btn-add-supplier').click(function(){
+        $('#btn-add-supplier').off("click").on("click", function(){
             uni_modal("Tambah Pemasok Baru", "{% url 'suppliers_save' %}");
         });
 
         // Edit
-        $('.btn-edit-supplier').click(function(){
+        $('.btn-edit-supplier').off("click").on("click", function(){
             uni_modal("Ubah Data Pemasok", "{% url 'suppliers_save' %}?id=" + $(this).data('id'));
         });
 
         // Delete
-        $('.btn-delete-supplier').click(function(){
+        $('.btn-delete-supplier').off("click").on("click", function(){
             _conf("Apakah Anda yakin ingin menghapus pemasok ini?", "delete_supplier", [$(this).data('id')]);
         });
-    });
 
-    function delete_supplier($id) {
-        start_loader();
-        $.ajax({
-            url: "{% url 'suppliers_delete' %}",
-            method: "POST",
-            headers: {'X-CSRFToken': '{{ csrf_token }}'},
-            data: { id: $id },
-            success: function(resp) {
-                if(resp.status == 'success') {
-                    location.reload();
-                } else {
-                    alert("Gagal menghapus data.");
-                    end_loader();
+        window.delete_supplier = function($id) {
+            start_loader();
+            $.ajax({
+                url: "{% url 'suppliers_delete' %}",
+                method: "POST",
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                data: { id: $id },
+                success: function(resp) {
+                    if(resp.status == 'success') {
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                    } else {
+                        showAlert("Gagal menghapus data.");
+                        end_loader();
+                    }
                 }
-            }
-        });
-    }
+            });
+        };
+    })(jQuery);
 </script>
 {% endblock %}

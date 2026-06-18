@@ -4,153 +4,235 @@
 {% block title %}Dashboard - Admin{% endblock %}
 
 {% block pageContent %}
-<div class="saas-header mb-4">
-    <div class="sh-title">
-        <h2>Dashboard</h2>
-        <p>Ringkasan performa toko hari ini.</p>
+
+<!-- Welcome Banner -->
+<div class="mb-4 px-1 d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
+    <div>
+        <h2 class="fw-black mb-1" style="font-size: 1.6rem; color: #0f172a; letter-spacing: -0.03em;">
+            Selamat Datang, <span style="background: linear-gradient(135deg,#6366f1,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">{{ request.user.username|title }}</span> 👋
+        </h2>
+        <p class="text-muted mb-0" style="font-size: 0.95rem;">Berikut ringkasan performa toko DD Shoes hari ini.</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+        <div class="text-end">
+            <div class="fw-bold text-muted" id="realtime-clock" style="font-size: 0.95rem; font-variant-numeric: tabular-nums;">--:--:--</div>
+        </div>
+        <div class="badge rounded-pill d-flex align-items-center gap-2 px-3 py-2" style="background: rgba(16,185,129,0.1); color: #059669; border: 1px solid rgba(16,185,129,0.2); font-size: 0.85rem;">
+            <div class="pulse-dot"></div> Toko Buka
+        </div>
     </div>
 </div>
 
 <!-- 4 Kartu Metrik -->
-<div class="stats-grid mb-4">
-    <div class="stat-card card-cat">
-        <i class="material-icons bg-icon" style="color:#8b5cf6;">inventory_2</i>
-        <div class="stat-header d-flex justify-content-between align-items-center">
-            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Total Stok</span>
-            <div class="icon-box ib-1"><i class="material-icons">inventory_2</i></div>
+<div class="row g-3 mb-4">
+    <!-- Total Stok -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="dash-metric-card" style="border-left: 4px solid #8b5cf6;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="dm-label" style="color:#8b5cf6;">TOTAL STOK</p>
+                    <h3 class="dm-value dm-counter" data-target="{{ total_stock }}">0</h3>
+                    <p class="dm-sub">pasang sepatu tersedia</p>
+                </div>
+                <div class="dm-icon" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                    <i class="material-icons">inventory_2</i>
+                </div>
+            </div>
         </div>
-        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ total_stock|intcomma }}</p></div>
     </div>
-    
-    <div class="stat-card card-prod">
-        <i class="material-icons bg-icon" style="color:#10b981;">shopping_cart</i>
-        <div class="stat-header d-flex justify-content-between align-items-center">
-            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Terjual Hari Ini</span>
-            <div class="icon-box ib-2"><i class="material-icons">shopping_cart</i></div>
+
+    <!-- Terjual Hari Ini -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="dash-metric-card" style="border-left: 4px solid #10b981;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="dm-label" style="color:#10b981;">TERJUAL HARI INI</p>
+                    <h3 class="dm-value dm-counter" data-target="{{ total_sold_today }}">0</h3>
+                    <p class="dm-sub">pasang terjual hari ini</p>
+                </div>
+                <div class="dm-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
+                    <i class="material-icons">shopping_cart</i>
+                </div>
+            </div>
         </div>
-        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ total_sold_today|intcomma }}</p></div>
     </div>
-    
-    <div class="stat-card card-ord">
-        <i class="material-icons bg-icon" style="color:#0ea5e9;">account_balance_wallet</i>
-        <div class="stat-header d-flex justify-content-between align-items-center">
-            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Pendapatan Hari Ini</span>
-            <div class="icon-box ib-3"><i class="material-icons">account_balance_wallet</i></div>
+
+    <!-- Pendapatan -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="dash-metric-card" style="border-left: 4px solid #0ea5e9;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="dm-label" style="color:#0ea5e9;">PENDAPATAN HARI INI</p>
+                    <h3 class="dm-value" style="font-size: 1.3rem;">Rp <span class="dm-counter" data-target="{{ revenue_today }}">0</span></h3>
+                    <p class="dm-sub">total transaksi masuk</p>
+                </div>
+                <div class="dm-icon" style="background: linear-gradient(135deg,#0ea5e9,#0284c7);">
+                    <i class="material-icons">account_balance_wallet</i>
+                </div>
+            </div>
         </div>
-        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">Rp {{ revenue_today|intcomma }}</p></div>
     </div>
-    
-    <div class="stat-card card-rev">
-        <i class="material-icons bg-icon" style="color:#f59e0b;">warning</i>
-        <div class="stat-header d-flex justify-content-between align-items-center">
-            <span class="stat-label" style="font-weight: 800; font-size: 0.7rem; text-transform: uppercase; color: #fff;">Stok Menipis</span>
-            <div class="icon-box ib-4"><i class="material-icons">warning</i></div>
+
+    <!-- Stok Menipis -->
+    <div class="col-sm-6 col-xl-3">
+        <div class="dash-metric-card" style="border-left: 4px solid #f59e0b;">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <p class="dm-label" style="color:#f59e0b;">STOK MENIPIS</p>
+                    <h3 class="dm-value dm-counter" data-target="{{ low_stock_count }}">0</h3>
+                    <p class="dm-sub">produk perlu restock</p>
+                </div>
+                <div class="dm-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
+                    <i class="material-icons">warning_amber</i>
+                </div>
+            </div>
         </div>
-        <div><p class="stat-val" style="font-size: 1.35rem; font-weight: 800; color: #fff; margin: 0;">{{ low_stock_count|intcomma }}</p></div>
     </div>
 </div>
 
-<!-- Layout Utama 7:3 -->
-<div class="main-grid">
-    <!-- Kiri: Chart -->
-    <div class="glass-panel">
-        <div class="panel-head">
-            <div class="d-flex align-items-center gap-3">
-                <div class="ph-icon" style="background: var(--grad-violet);"><i class="material-icons">trending_up</i></div>
-                <div class="ph-title">
-                    <h3>Tren Pendapatan</h3>
-                    <p>Statistik penjualan dari waktu ke waktu</p>
+<!-- Quick Actions -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <a href="javascript:void(0);" hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
+            <div class="qa-icon" style="background: linear-gradient(135deg,#6366f1,#8b5cf6);">
+                <i class="material-icons">point_of_sale</i>
+            </div>
+            <div class="qa-content">
+                <h6>Buka Kasir POS</h6>
+                <p>Mulai transaksi penjualan baru</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="javascript:void(0);" hx-get="{% url 'stockin_list' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
+            <div class="qa-icon" style="background: linear-gradient(135deg,#0ea5e9,#3b82f6);">
+                <i class="material-icons">move_to_inbox</i>
+            </div>
+            <div class="qa-content">
+                <h6>Barang Masuk</h6>
+                <p>Catat stok masuk dari supplier</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-4">
+        <a href="javascript:void(0);" hx-get="{% url 'sales_report' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
+            <div class="qa-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
+                <i class="material-icons">bar_chart</i>
+            </div>
+            <div class="qa-content">
+                <h6>Laporan Penjualan</h6>
+                <p>Lihat rekapitulasi penjualan toko</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+<!-- Layout Utama Baris 1: Chart -->
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="glass-panel h-100">
+            <div class="panel-head mb-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="ph-icon" style="background: var(--grad-violet);"><i class="material-icons">trending_up</i></div>
+                    <div class="ph-title">
+                        <h3 class="mb-0">Tren Pendapatan</h3>
+                        <p class="mb-0">Statistik penjualan dari waktu ke waktu</p>
+                    </div>
+                </div>
+                <div class="chart-filters btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary filter-btn active" data-period="daily" style="border-radius: 20px 0 0 20px;">Harian</button>
+                    <button class="btn btn-sm btn-outline-primary filter-btn" data-period="weekly">Mingguan</button>
+                    <button class="btn btn-sm btn-outline-primary filter-btn" data-period="monthly" style="border-radius: 0 20px 20px 0;">Bulanan</button>
                 </div>
             </div>
-            <div class="chart-filters">
-                <button class="filter-btn active" data-period="daily">Harian</button>
-                <button class="filter-btn" data-period="weekly">Mingguan</button>
-                <button class="filter-btn" data-period="monthly">Bulanan</button>
+            <div style="position: relative; height: 320px; width: 100%;">
+                <canvas id="revenueChart"></canvas>
             </div>
         </div>
-        <div style="position: relative; height: 350px; width: 100%;">
-            <canvas id="revenueChart"></canvas>
-        </div>
     </div>
-    
-    <!-- Kanan: Leaderboard & Low Stock -->
-    <div class="d-flex flex-column gap-3">
+</div>
+
+<!-- Layout Utama Baris 2: Top Products & Low Stock -->
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
         <!-- 5 Produk Terlaris -->
-        <div class="glass-panel">
-            <div class="panel-head mb-3">
+        <div class="glass-panel h-100">
+            <div class="panel-head mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="ph-icon" style="background: var(--grad-emerald);"><i class="material-icons">star</i></div>
                     <div class="ph-title">
-                        <h3>Top 5 Terlaris</h3>
-                        <p>Produk paling banyak dibeli</p>
+                        <h3 class="mb-0">Top 5 Terlaris</h3>
+                        <p class="mb-0">Produk paling banyak dibeli</p>
                     </div>
                 </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-borderless table-sm mb-0">
-                    <tbody>
-                        {% for p in top_products %}
-                        <tr>
-                            <td class="align-middle">
-                                <div class="d-flex align-items-center">
-                                    <div style="width: 35px; height: 35px; border-radius: 8px; overflow: hidden; background: #f1f5f9; margin-right: 10px;">
-                                        {% if p.image %}
-                                        <img src="{{ p.image.url }}" alt="Img" style="width: 100%; height: 100%; object-fit: cover;">
-                                        {% else %}
-                                        <i class="material-icons text-muted" style="line-height: 35px; text-align: center; display: block;">image</i>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0" style="font-size: 0.85rem; font-weight: 700;">{{ p.name }}</h6>
-                                        <small class="text-muted" style="font-size: 0.7rem;">{{ p.size }} | {{ p.brand.name }}</small>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="align-middle text-end">
-                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill" style="font-weight: 600;">{{ p.total_sold|default:0|intcomma }} terjual</span>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td class="text-center text-muted" style="font-size: 0.8rem; padding: 20px;">Belum ada data penjualan.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div>
+                {% for p in top_products %}
+                <div class="d-flex align-items-center gap-3 mb-3 pb-3" style="border-bottom: 1px dashed #e2e8f0;">
+                    <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
+                        #{{ forloop.counter }}
+                    </div>
+                    <div style="width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #f1f5f9; flex-shrink:0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
+                        {% if p.image %}
+                        <img src="{{ p.image.url }}" alt="Img" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <i class="material-icons text-muted" style="line-height: 48px; text-align: center; display: block; font-size:24px;">checkroom</i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <h6 class="mb-0 text-truncate" style="font-size: 0.95rem; font-weight: 700; color:#1e293b; max-width: 200px;">{{ p.name }}</h6>
+                            <span class="fw-bold text-success" style="font-size: 0.85rem;">{{ p.total_sold|default:0 }} terjual</span>
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 0.75rem;">Size {{ p.size }} · {{ p.brand.name }}</small>
+                        <div class="mini-progress">
+                            <div class="mini-progress-bar" style="width: {% widthratio p.total_sold top_products.0.total_sold|default:1 100 %}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="material-icons" style="font-size:48px; opacity:0.3; display:block; margin-bottom:12px;">bar_chart</i>
+                    Belum ada data penjualan.
+                </div>
+                {% endfor %}
             </div>
         </div>
-
+    </div>
+    <div class="col-md-5">
         <!-- Stok Kritis -->
-        <div class="glass-panel">
-            <div class="panel-head mb-3">
+        <div class="glass-panel h-100">
+            <div class="panel-head mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="ph-icon" style="background: var(--grad-amber);"><i class="material-icons">warning_amber</i></div>
                     <div class="ph-title">
-                        <h3>Stok Kritis</h3>
-                        <p>Sisa stok ≤ 3</p>
+                        <h3 class="mb-0">Stok Kritis</h3>
+                        <p class="mb-0">Sisa stok ≤ 3 pasang</p>
                     </div>
                 </div>
             </div>
-            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                <table class="table table-borderless table-sm mb-0">
-                    <tbody>
-                        {% for p in low_stock_products %}
-                        <tr>
-                            <td class="align-middle">
-                                <h6 class="mb-0" style="font-size: 0.85rem; font-weight: 600; color: #334155;">{{ p.name }}</h6>
-                                <small class="text-muted" style="font-size: 0.7rem;">{{ p.size }}</small>
-                            </td>
-                            <td class="align-middle text-end">
-                                {% if p.stock <= 0 %}
-                                <span class="badge bg-danger-subtle text-danger rounded-pill px-2" style="font-size: 0.75rem;">Habis</span>
-                                {% else %}
-                                <span class="badge bg-warning-subtle text-warning rounded-pill px-2" style="font-size: 0.75rem;">Sisa {{ p.stock }}</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td class="text-center text-muted" style="font-size: 0.8rem; padding: 20px;">Semua stok aman.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="pe-2" style="max-height: 380px; overflow-y: auto;">
+                {% for p in low_stock_products %}
+                <div class="d-flex align-items-center justify-content-between mb-3 py-2 px-3 rounded-3" style="background: rgba(248,250,252,0.8); border: 1px solid rgba(0,0,0,0.03);">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="material-icons text-amber-500" style="font-size: 20px; color: #f59e0b;">error_outline</i>
+                        <div>
+                            <h6 class="mb-0 text-truncate" style="font-size: 0.85rem; font-weight: 700; color: #334155; max-width: 140px;" title="{{ p.name }}">{{ p.name }}</h6>
+                            <small class="text-muted" style="font-size: 0.72rem;">Size {{ p.size }}</small>
+                        </div>
+                    </div>
+                    {% if p.stock <= 0 %}
+                    <span class="badge rounded-pill px-3 py-1" style="background:#fee2e2; color:#dc2626; font-size:0.75rem; font-weight:700;">Habis</span>
+                    {% else %}
+                    <span class="badge rounded-pill px-3 py-1" style="background:#fef9c3; color:#854d0e; font-size:0.75rem; font-weight:700;">Sisa {{ p.stock }}</span>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-5">
+                    <i class="material-icons" style="font-size:48px; color:#10b981; opacity:0.6; display:block; margin-bottom:12px;">check_circle</i>
+                    Semua stok aman!
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -161,96 +243,129 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    let revenueChart = null;
-
-    function initChart(labels, data) {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
-        
-        // Gradient fill
-        const gradientFill = ctx.createLinearGradient(0, 0, 0, 280);
-        gradientFill.addColorStop(0,   'rgba(99,102,241,0.55)');
-        gradientFill.addColorStop(0.5, 'rgba(236,72,153,0.18)');
-        gradientFill.addColorStop(1,   'rgba(255,255,255,0)');
-
-        if (revenueChart) {
-            revenueChart.destroy();
+    (function($) {
+        // Realtime Clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateString = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            $('#realtime-clock').html(dateString + ' &nbsp;|&nbsp; ' + timeString);
         }
+        setInterval(updateClock, 1000);
+        updateClock();
 
-        revenueChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Pendapatan',
-                    data: data,
-                    borderColor: '#6366f1', 
-                    borderWidth: 3,
-                    backgroundColor: gradientFill,
-                    fill: true, 
-                    tension: 0.4,
-                    pointRadius: 0, 
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#ec4899', 
-                    pointBorderWidth: 2.5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: 'rgba(15,23,42,0.9)',
-                        titleColor: '#f8fafc', bodyColor: '#fff',
-                        padding: 12, cornerRadius: 12,
-                        callbacks: {
-                            label: function(context) {
-                                let value = context.raw || 0;
-                                return ' Rp ' + value.toLocaleString('id-ID');
+        // Animate Counters
+        $('.dm-counter').each(function () {
+            $(this).prop('Counter',0).animate({
+                Counter: $(this).data('target')
+            }, {
+                duration: 1200,
+                easing: 'swing',
+                step: function (now) {
+                    // check if revenue (large number)
+                    if ($(this).data('target') > 100000) {
+                        $(this).text(Math.ceil(now).toLocaleString('id-ID'));
+                    } else {
+                        $(this).text(Math.ceil(now));
+                    }
+                }
+            });
+        });
+
+        // Chart Init
+        let revenueChart = null;
+
+        function initChart(labels, data) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            
+            // Area Chart Gradient fill
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 300);
+            gradientFill.addColorStop(0,   'rgba(99,102,241,0.6)');
+            gradientFill.addColorStop(1,   'rgba(255,255,255,0)');
+
+            if (revenueChart) {
+                revenueChart.destroy();
+            }
+
+            revenueChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Pendapatan',
+                        data: data,
+                        borderColor: '#6366f1', 
+                        borderWidth: 3,
+                        backgroundColor: gradientFill,
+                        fill: 'start', 
+                        tension: 0.4,
+                        pointRadius: 0, 
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#6366f1', 
+                        pointBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15,23,42,0.92)',
+                            titleColor: '#f8fafc', bodyColor: '#fff',
+                            padding: 12, cornerRadius: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    let value = context.raw || 0;
+                                    return ' Rp ' + value.toLocaleString('id-ID');
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    x: { grid: { display: false } },
-                    y: { 
-                        beginAtZero: true,
-                        border: { display: false },
-                        ticks: {
-                            callback: function(value) {
-                                if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'M';
-                                if (value >= 1000) return 'Rp ' + (value / 1000) + 'K';
-                                return 'Rp ' + value;
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false },
+                            border: { display: false }
+                        },
+                        y: { 
+                            beginAtZero: true,
+                            border: { display: false, dash: [4, 4] },
+                            grid: { color: '#f1f5f9', tickLength: 0 },
+                            ticks: {
+                                callback: function(value) {
+                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'M';
+                                    if (value >= 1000) return 'Rp ' + (value / 1000) + 'K';
+                                    return 'Rp ' + value;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    function loadChartData(period) {
-        $.ajax({
-            url: "{% url 'dashboard_chart_data' %}",
-            data: { period: period },
-            success: function(res) {
-                initChart(res.labels, res.data);
-            }
-        });
-    }
+        function loadChartData(period) {
+            $.ajax({
+                url: "{% url 'dashboard_chart_data' %}",
+                data: { period: period },
+                success: function(res) {
+                    initChart(res.labels, res.data);
+                }
+            });
+        }
 
-    $(document).ready(function() {
         // Init chart with daily data
         loadChartData('daily');
 
         // Filter button clicks
-        $('.filter-btn').click(function() {
-            $('.filter-btn').removeClass('active');
-            $(this).addClass('active');
+        $('.filter-btn').off('click').on('click', function() {
+            $('.filter-btn').removeClass('active').removeClass('btn-primary').addClass('btn-outline-primary');
+            $(this).removeClass('btn-outline-primary').addClass('btn-primary active');
             let period = $(this).data('period');
             loadChartData(period);
         });
-    });
+
+    })(jQuery);
 </script>
 {% endblock %}

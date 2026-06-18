@@ -76,6 +76,10 @@ class StockInDetails(models.Model):
     def __str__(self):
         return f"{self.stock_in.id} - {self.product.name}"
 
+    @property
+    def subtotal(self):
+        return self.quantity * self.buy_price
+
 class Transactions(models.Model):
     PAYMENT_CHOICES = [
         ('tunai', 'Tunai'),
@@ -101,7 +105,7 @@ class TransactionDetails(models.Model):
     subtotal = models.IntegerField()
 
     def __str__(self):
-        return f"{self.transaction.id} - {self.product.name}"
+        return f"Trx {self.transaction.id} - {self.product.name}"
 
 class CashClosings(models.Model):
     cashier = models.ForeignKey(User, on_delete=models.CASCADE)

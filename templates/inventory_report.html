@@ -86,16 +86,23 @@
             <tbody>
                 {% for p in products %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold">{{ p.name }} <br><small class="text-muted">{{ p.size }}</small></td>
-                    <td>{{ p.brand.name }} <br><small class="text-muted">{{ p.category.name }}</small></td>
-                    <td class="text-center"><span class="badge border bg-light text-dark">{{ p.condition }}</span></td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ p.name }} <br><small class="text-muted" style="font-size: 0.75rem;">{{ p.size }}</small></td>
+                    <td>{{ p.brand.name }} <br><small class="text-muted" style="font-size: 0.8rem;">{{ p.category.name }}</small></td>
+                    <td class="text-center"><span class="badge-glass badge-dark">{{ p.condition }}</span></td>
                     <td class="text-center fw-bold {% if p.stock <= 3 %}text-danger{% else %}text-success{% endif %}">{{ p.stock }}</td>
                     <td class="text-end text-muted">Rp {{ p.buy_price|intcomma }}</td>
                     <td class="text-end fw-bold" style="color: #6366f1;">Rp {{ p.sell_price|intcomma }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data inventory aktif.</td></tr>
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="material-icons">inventory</i>
+                            <p>Tidak ada data inventory aktif.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

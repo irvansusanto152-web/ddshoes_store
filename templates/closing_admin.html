@@ -48,8 +48,8 @@
             <tbody>
                 {% for cl in closings %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold">{{ cl.closing_date|date:"d M Y" }} <br><small class="text-muted">{{ cl.submitted_at|time:"H:i" }}</small></td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ cl.closing_date|date:"d M Y" }} <br><small class="text-muted" style="font-size: 0.75rem;">{{ cl.submitted_at|time:"H:i" }}</small></td>
                     <td>{{ cl.cashier.username }}</td>
                     <td class="text-end text-muted">Rp {{ cl.system_cash_total|intcomma }}</td>
                     <td class="text-end fw-bold">Rp {{ cl.actual_cash|intcomma }}</td>
@@ -58,15 +58,22 @@
                     </td>
                     <td class="text-center">
                         {% if cl.cash_difference == 0 %}
-                            <span class="badge bg-success-subtle text-success border px-3 rounded-pill">MATCH</span>
+                            <span class="badge-glass badge-active">MATCH</span>
                         {% else %}
-                            <span class="badge bg-danger-subtle text-danger border px-3 rounded-pill">SELISIH</span>
+                            <span class="badge-glass badge-inactive">SELISIH</span>
                         {% endif %}
                     </td>
                     <td class="text-muted text-truncate" style="max-width: 150px;">{{ cl.notes|default:'-' }}</td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="8" class="text-center text-muted py-4">Belum ada data closing kasir.</td></tr>
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="material-icons">receipt_long</i>
+                            <p>Belum ada data closing kasir.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>

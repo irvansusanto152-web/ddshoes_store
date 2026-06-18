@@ -38,22 +38,29 @@
             <tbody>
                 {% for si in stockins %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold">{{ si.received_date|date:"d M Y" }}</td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ si.received_date|date:"d M Y" }}</td>
                     <td style="color: #334155;">{{ si.supplier.name }}</td>
                     <td class="text-center">
-                        <span class="badge bg-primary-subtle text-primary border rounded-pill px-3">{{ si.total_items }} jenis</span>
+                        <span class="badge-glass badge-primary">{{ si.total_items }} jenis</span>
                     </td>
                     <td>{{ si.received_by.username }}</td>
                     <td class="text-muted text-truncate" style="max-width: 200px;">{{ si.notes|default:'-' }}</td>
                     <td class="text-center">
-                        <a href="{% url 'stockin_detail' si.id %}" class="btn btn-sm btn-light rounded-circle border" title="Detail" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-info" style="font-size: 16px; line-height: 30px;">visibility</i>
+                        <a href="{% url 'stockin_detail' si.id %}" class="btn-action btn-action-view" title="Detail">
+                            <i class="material-icons">visibility</i>
                         </a>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted py-4">Belum ada data barang masuk.</td></tr>
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="material-icons">inbox</i>
+                            <p>Belum ada data barang masuk.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -63,8 +70,8 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        $("#search-stockin").on("keyup", function() {
+    (function($) {
+        $("#search-stockin").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#stockin-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
@@ -72,6 +79,6 @@
                 }
             });
         });
-    });
+    })(jQuery);
 </script>
 {% endblock %}

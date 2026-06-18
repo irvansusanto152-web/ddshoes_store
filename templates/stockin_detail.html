@@ -53,27 +53,38 @@
                             <th>Produk</th>
                             <th class="text-center">Kondisi</th>
                             <th class="text-end">Harga Beli</th>
+                            <th class="text-end">Harga Jual</th>
                             <th class="text-center">Qty</th>
-                            <th class="text-end">Subtotal Nilai</th>
+                            <th class="text-end">Subtotal Beli</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in stockin.details.all %}
                         <tr>
-                            <td class="text-center text-muted">{{ forloop.counter }}</td>
+                            <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
                             <td>
-                                <h6 class="mb-0 fw-bold">{{ item.product.name }}</h6>
-                                <small class="text-muted">{{ item.product.size }} | {{ item.product.brand.name }}</small>
+                                <h6 class="mb-0 fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ item.product.name }}</h6>
+                                <small class="text-muted" style="font-size: 0.75rem;">{{ item.product.size }} | {{ item.product.brand.name }}</small>
                             </td>
-                            <td class="text-center"><span class="badge bg-light text-dark border">{{ item.product.condition }}</span></td>
+                            <td class="text-center"><span class="badge-glass badge-dark">{{ item.product.condition }}</span></td>
                             <td class="text-end text-muted">Rp {{ item.buy_price|intcomma }}</td>
+                            <td class="text-end">
+                                <span class="fw-bold text-success" style="font-size: 0.95rem;">Rp {{ item.product.sell_price|intcomma }}</span>
+                            </td>
                             <td class="text-center fw-bold">{{ item.quantity }}</td>
                             <td class="text-end fw-bold" style="color: #6366f1;">
-                                Rp {% widthratio item.buy_price 1 item.quantity %}
+                                Rp {{ item.subtotal|intcomma }}
                             </td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="6" class="text-center text-muted">Tidak ada data item.</td></tr>
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <i class="material-icons">inventory_2</i>
+                                    <p>Tidak ada data item.</p>
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>

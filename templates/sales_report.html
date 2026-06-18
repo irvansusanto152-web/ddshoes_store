@@ -65,28 +65,35 @@
             <tbody>
                 {% for t in transactions %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold">TRX-{{ t.id|stringformat:"05d" }}</td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">TRX-{{ t.id|stringformat:"05d" }}</td>
                     <td>{{ t.transaction_date|date:"d M Y, H:i" }}</td>
                     <td>{{ t.cashier.username|default:'-' }}</td>
                     <td>
                         {% if t.payment_method == 'tunai' %}
-                            <span class="badge bg-success-subtle text-success border">Tunai</span>
+                            <span class="badge-glass badge-active">Tunai</span>
                         {% elif t.payment_method == 'transfer_bri' %}
-                            <span class="badge bg-info-subtle text-info border">Transfer BRI</span>
+                            <span class="badge-glass badge-info">Transfer BRI</span>
                         {% else %}
-                            <span class="badge bg-warning-subtle text-warning border">QRIS</span>
+                            <span class="badge-glass badge-warning">QRIS</span>
                         {% endif %}
                     </td>
-                    <td class="text-end fw-bold text-success">Rp {{ t.total_amount|intcomma }}</td>
+                    <td class="text-end fw-bold text-success" style="font-size: 0.95rem;">Rp {{ t.total_amount|intcomma }}</td>
                     <td class="text-center d-print-none">
-                        <button class="btn btn-sm btn-light rounded-circle border btn-detail" data-id="{{ t.id }}" title="Lihat Detail" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">receipt_long</i>
+                        <button class="btn-action btn-action-view btn-detail" data-id="{{ t.id }}" title="Lihat Detail">
+                            <i class="material-icons">receipt_long</i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data transaksi.</td></tr>
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="material-icons">receipt</i>
+                            <p>Tidak ada data transaksi.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
             <tfoot>
@@ -116,12 +123,11 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        $('.btn-detail').click(function() {
-            // we will need a view for detail, but for now we just alert or show a modal
-            // Let's assume we have a generic detail modal or we can add it later
-            alert("Detail transaksi #" + $(this).data('id') + " (Fitur detail akan ditambahkan di Fase 4 POS)");
+    (function($) {
+        $('.btn-detail').off("click").on("click", function() {
+            var trxId = $(this).data('id');
+            window.uni_modal('Detail Transaksi #TRX-' + String(trxId).padStart(5, '0'), '/transactions/' + trxId + '/detail/', 'modal-lg');
         });
-    });
+    })(jQuery);
 </script>
 {% endblock %}

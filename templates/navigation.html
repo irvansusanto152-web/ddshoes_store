@@ -32,9 +32,17 @@
                 <!-- ========== ADMIN MENU ========== -->
                 <div class="sb-section-label">MAIN MENU</div>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                       hx-get="{% url 'dashboard' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">dashboard</i>
                         <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="mdc-drawer-item">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'pos_page' %}active{% endif %}" 
+                       hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
+                        <i class="material-icons text-warning">point_of_sale</i>
+                        <span class="text-warning fw-bold">Transaksi (POS)</span>
                     </a>
                 </li>
 
@@ -42,19 +50,22 @@
                 <div class="sb-section-label">MASTER DATA</div>
 
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'brands_list' %}active{% endif %}" href="{% url 'brands_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'brands_list' %}active{% endif %}" 
+                       hx-get="{% url 'brands_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">style</i>
                         <span>Merek</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'categories_list' %}active{% endif %}" href="{% url 'categories_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'categories_list' %}active{% endif %}" 
+                       hx-get="{% url 'categories_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">category</i>
                         <span>Kategori</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'suppliers_list' %}active{% endif %}" href="{% url 'suppliers_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'suppliers_list' %}active{% endif %}" 
+                       hx-get="{% url 'suppliers_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">local_shipping</i>
                         <span>Pemasok</span>
                     </a>
@@ -64,13 +75,15 @@
                 <div class="sb-section-label">INVENTORY</div>
 
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'products_list' %}active{% endif %}" href="{% url 'products_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'products_list' %}active{% endif %}" 
+                       hx-get="{% url 'products_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">inventory_2</i>
                         <span>Katalog Produk</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'stockin_list' or request.resolver_match.url_name == 'stockin_save' or request.resolver_match.url_name == 'stockin_detail' %}active{% endif %}" href="{% url 'stockin_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'stockin_list' or request.resolver_match.url_name == 'stockin_save' or request.resolver_match.url_name == 'stockin_detail' %}active{% endif %}" 
+                       hx-get="{% url 'stockin_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">move_to_inbox</i>
                         <span>Barang Masuk</span>
                     </a>
@@ -80,19 +93,22 @@
                 <div class="sb-section-label">LAPORAN</div>
 
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}" href="{% url 'sales_report' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}" 
+                       hx-get="{% url 'sales_report' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">bar_chart</i>
                         <span>Laporan Penjualan</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'inventory_report' %}active{% endif %}" href="{% url 'inventory_report' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'inventory_report' %}active{% endif %}" 
+                       hx-get="{% url 'inventory_report' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">assessment</i>
                         <span>Laporan Inventory</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_admin' %}active{% endif %}" href="{% url 'closing_admin' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_admin' %}active{% endif %}" 
+                       hx-get="{% url 'closing_admin' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">receipt_long</i>
                         <span>Data Closing</span>
                     </a>
@@ -102,7 +118,8 @@
                 <div class="sb-section-label">PENGATURAN</div>
 
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}" href="{% url 'users_list' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'users_list' %}active{% endif %}" 
+                       hx-get="{% url 'users_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">manage_accounts</i>
                         <span>Manajemen User</span>
                     </a>
@@ -112,13 +129,15 @@
                 <!-- ========== KASIR MENU ========== -->
                 <div class="sb-section-label">KASIR MENU</div>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'pos_page' %}active{% endif %}" href="{% url 'pos_page' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'pos_page' %}active{% endif %}" 
+                       hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">point_of_sale</i>
                         <span>Transaksi (POS)</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'catalog_kasir' %}active{% endif %}" href="{% url 'catalog_kasir' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'catalog_kasir' %}active{% endif %}" 
+                       hx-get="{% url 'catalog_kasir' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">storefront</i>
                         <span>Katalog Produk</span>
                     </a>
@@ -128,7 +147,8 @@
                 <div class="sb-section-label">SHIFT</div>
 
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_kasir' %}active{% endif %}" href="{% url 'closing_kasir' %}">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_kasir' %}active{% endif %}" 
+                       hx-get="{% url 'closing_kasir' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
                         <i class="material-icons">lock_clock</i>
                         <span>Closing Kasir</span>
                     </a>

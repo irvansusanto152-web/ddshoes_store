@@ -159,7 +159,7 @@
     $('#btn-submit-closing').click(function() {
         let actual = $('#actual-cash').val();
         if (!actual || parseInt(actual) < 0) {
-            alert('Masukkan jumlah kas fisik terlebih dahulu!');
+            showAlert('Masukkan jumlah kas fisik terlebih dahulu!');
             return;
         }
 
@@ -182,13 +182,13 @@
                 if (resp.status === 'success') {
                     location.reload();
                 } else {
-                    alert('Gagal: ' + resp.message);
+                    showAlert('Gagal: ' + resp.message);
                     btn.prop('disabled', false).html('<i class="material-icons align-middle me-2">lock</i> Submit & Kunci Closing');
                 }
             },
             error: function() {
                 end_loader();
-                alert('Terjadi kesalahan sistem.');
+                showAlert('Terjadi kesalahan sistem.');
                 btn.prop('disabled', false).html('<i class="material-icons align-middle me-2">lock</i> Submit & Kunci Closing');
             }
         });

@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import timedelta
@@ -358,11 +358,12 @@ def stockin_save(request):
             
             if qty > 0:
                 product = Products.objects.get(id=pid)
+                final_bp = bp if bp > 0 else product.buy_price
                 StockInDetails.objects.create(
                     stock_in=si,
                     product=product,
                     quantity=qty,
-                    buy_price=bp
+                    buy_price=final_bp
                 )
                 # Note: signals.py handles incrementing product.stock
                 
@@ -626,6 +627,17 @@ def pos_process_payment(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@login_required
+def transaction_detail(request, pk):
+    if request.user.userprofile.role not in ['admin', 'kasir']:
+        return redirect('dashboard')
+    try:
+        transaction = Transactions.objects.prefetch_related('details__product').get(id=pk)
+    except Transactions.DoesNotExist:
+        return HttpResponse("Transaksi tidak ditemukan.", status=404)
+    
+    return render(request, 'transaction_detail.html', {'t': transaction})
 
 @login_required
 def catalog_kasir(request):

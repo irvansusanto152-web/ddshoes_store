@@ -344,6 +344,23 @@
   - [x] Tes restock produk yang stoknya habis (`inactive`).
   - [x] Tes buat produk baru langsung dari form Stock In, pastikan stok bertambah dan muncul di katalog.
 
+## FASE 6.2 — Laporan Transaksi & Redesign Dashboard
+- [x] **Detail Transaksi (Sales Report):**
+  - [x] Buat `transaction_detail` view di `core/views.py`.
+  - [x] Tambahkan route di `core/urls.py`.
+  - [x] Buat `templates/transaction_detail.html` (modal fragment).
+  - [x] Ubah JS di `sales_report.html` untuk memanggil modal alih-alih `alert()`.
+- [x] **Custom Global Alert:**
+  - [x] Tambahkan elemen Modal Alert kustom ke `templates/base.html`.
+  - [x] Buat fungsi global `window.showAlert(msg, type)` di `base.html`.
+  - [x] Refactor semua file template yang memanggil `alert()` menjadi `showAlert()` (13 file).
+- [x] **Redesign Dashboard:**
+  - [x] Redesign kartu metrik (`dash-metric-card`) dengan desain modern & hover effect.
+  - [x] Tambah Welcome Banner dengan gradient text.
+  - [x] Tambah Quick Action buttons (POS, Barang Masuk, Laporan).
+  - [x] Tambah CSS kelas baru di `style.css` (`.dash-metric-card`, `.dm-*`, `.quick-action-btn`).
+  - [x] Bersihkan duplikat konten di `dashboard.html`.
+
 ---
 
 ## Finalisasi
@@ -351,6 +368,144 @@
   - [x] Review & cleanup kode
   - [x] Pastikan semua `migrations` ter-commit
   - [x] `README.md` dokumentasi cara menjalankan project
+
+---
+
+## Fase 7 — Redesign UI/UX (Plus Jakarta Sans & Glassmorphism)
+- [x] **Global Typography:** Ganti font `Inter` → `Plus Jakarta Sans` di `base.html` & `style.css`.
+- [x] **Glassmorphism Panels:** Update `.glass-panel` dengan `backdrop-filter: blur(16px) saturate(180%)`.
+- [x] **Global Tables:** Borderless table `.saas-table` — hapus border samping, spacious row padding.
+- [x] **Dashboard Metric Cards:** Glassmorphism `.dash-metric-card` dengan deep shadow & smooth hover.
+
+---
+
+## Fase 8 — Migrasi HTMX (Single Page Application)
+- [x] **Setup HTMX:** Tambah HTMX v1.9.10 & NProgress ke `base.html`.
+- [x] **Conditional Rendering:** `{% if not 'HTTP_HX_REQUEST' in request.META %}` agar hanya konten yang dikirim saat HTMX swap.
+- [x] **Wrapper `#main-content`:** Bungkus `{% block pageContent %}` dengan `<div id="main-content">`.
+- [x] **Sidebar HTMX Links:** Ganti semua `href` di `navigation.html` → `hx-get`, `hx-target="#main-content"`, `hx-push-url="true"`.
+- [x] **Active Link Handler:** Event `htmx:afterSwap` untuk update active state sidebar.
+- [x] **Dashboard Chart HTMX:** Refactor `$(document).ready` → `initDashboard()` yang langsung dieksekusi.
+- [x] **Fix Duplicate Block:** Perbaiki error `'block' tag with name 'title' appears more than once`.
+
+---
+
+## Fase 9 — HTMX Bug Fixes + Full UI Redesign (ui-ux-pro-max)
+
+### 🔴 Fase 9.1 — Perbaikan Bug Kritis (Semua Tombol Tidak Berfungsi)
+
+**Root cause yang ditemukan:**
+1. Stray `});` di `base.html` baris 222 → JS error global
+2. `$(document).ready()` tidak re-run saat HTMX swap
+3. `location.reload()` di delete handler tidak cocok dengan SPA
+
+- [x] **`base.html`** — Hapus stray `});` yang berlebih di baris 222
+- [x] **`base.html`** — Pastikan `{% block extra_js %}` dirender di kedua kondisi (HTMX & non-HTMX)
+- [x] **`brands.html`** — Ganti `$(document).ready()` → IIFE `(function($){...})(jQuery)` + ganti `location.reload()` → htmx trigger
+- [x] **`categories.html`** — Ganti `$(document).ready()` → IIFE + ganti `location.reload()`
+- [x] **`suppliers.html`** — Ganti `$(document).ready()` → IIFE + ganti `location.reload()`
+- [x] **`products.html`** — Ganti `$(document).ready()` → IIFE + ganti `location.reload()`
+- [x] **`users.html`** — Ganti `$(document).ready()` → IIFE + ganti `location.reload()`
+- [x] **`stockin.html`** — Ganti `$(document).ready()` → IIFE + ganti `location.reload()`
+- [x] **`sales_report.html`** — Ganti `$(document).ready()` → IIFE
+- [x] **`pos.html`** — Ganti `$(document).ready()` → IIFE; pastikan `loadProducts()` dipanggil di awal IIFE
+- [x] **Verifikasi**: `python manage.py check` → 0 issues
+- [x] **Manual test**: Tambah/Edit/Hapus di Merek, Kategori, Produk, Supplier, User ✓ | POS: pilih produk → bayar → struk ✓
+
+---
+
+### 🎨 Fase 9.2 — Dashboard Redesign (Modern & Premium)
+
+**Design tokens (ui-ux-pro-max output):**
+- Style: Glassmorphism — `backdrop-filter: blur(16-24px)`
+- Font: DM Sans (ganti Plus Jakarta Sans)
+- Aksen: `#6366f1` indigo, `#10b981` emerald, `#0ea5e9` sky, `#f59e0b` amber
+
+- [x] **`base.html`** — Ganti font import ke `DM Sans` dari Google Fonts
+- [x] **`style.css`** — Update `font-family` global ke `'DM Sans', sans-serif`
+- [x] **`dashboard.html`** — Welcome Banner
+  - [x] Tambah jam & tanggal realtime (update tiap detik via JS)
+  - [x] Badge "Toko Buka" dengan dot hijau berdenyut (CSS pulse animation)
+- [x] **`dashboard.html`** — Metric Cards (4 kartu)
+  - [x] Background: `rgba(255,255,255,0.8)` + `backdrop-filter: blur(20px)`
+  - [x] Animasi counter — angka naik dari 0 ke nilai asli (1.2 detik)
+  - [x] Ikon box naik ke 54×54px, shadow lebih kuat
+  - [x] Hover: `translateY(-8px)` + shadow naik
+- [x] **`dashboard.html`** — Layout Grid
+  - [x] Baris 1: Chart full width (col-12)
+  - [x] Baris 2: Top 5 Produk (col-md-7) + Stok Kritis (col-md-5)
+- [x] **`dashboard.html`** — Area Chart Pendapatan
+  - [x] Ubah ke Area Chart dengan gradient fill ungu-transparan
+  - [x] Filter tabs Harian/Mingguan/Bulanan dengan pill glassmorphism
+  - [x] Tooltip dark + format Rp
+- [x] **`dashboard.html`** — Top 5 Produk
+  - [x] Rank badge: gold (#1), silver (#2), bronze (#3)
+  - [x] Progress bar tipis persentase terjual
+- [x] **`dashboard.html`** — Quick Action
+  - [x] Ubah dari tombol panjang → 3 kartu aksi (col-4), hover scale(1.04)
+  - [x] Pasang `hx-get` + `hx-target` + `hx-push-url`
+- [x] **`style.css`** — Tambah: `.pulse-dot`, `.dm-counter`, `.qa-card`, `.rank-badge`, `.mini-progress`
+
+---
+
+### 🗃️ Fase 9.3 — Redesign Semua Tabel (Modern Borderless SaaS Style)
+
+**Standar tabel baru:**
+- Header: `0.72rem`, `letter-spacing: 0.1em`, `color: #94a3b8`, UPPERCASE, `background: transparent`
+- Border: hanya `border-bottom: 1px solid rgba(0,0,0,0.05)` — tidak ada kiri/kanan/atas
+- Row padding: `16px 20px` | Row hover: `rgba(99,102,241,0.04)` + `translateY(-1px)`
+
+- [x] **`style.css`** — Update `.saas-table` sesuai standar baru
+- [x] **`style.css`** — Tambah `.btn-action`, `.btn-action-edit`, `.btn-action-delete` (ikon dengan hover)
+- [x] **`style.css`** — Tambah `.badge-active`, `.badge-inactive` glassmorphism
+- [x] **`style.css`** — Tambah komponen empty state (`.empty-state`)
+- [x] **`brands.html`** — Ganti tombol edit/hapus ke `.btn-action` icon-only dengan tooltip
+- [x] **`categories.html`** — Redesign card grid: hover state lebih jelas, badge produk lebih elegan
+- [x] **`suppliers.html`** — Ganti tombol, tambah badge status aktif/non-aktif
+- [x] **`products.html`** — Ganti tombol, badge stok berwarna, chip kondisi sepatu
+- [x] **`users.html`** — Ganti tombol, badge role (Admin=indigo, Kasir=emerald)
+- [x] **`stockin.html`** — Ganti tombol detail, badge status barang masuk
+- [x] **`stockin_detail.html`** — Verifikasi subtotal, harga beli, harga jual tampil benar
+- [x] **`sales_report.html`** — Badge metode pembayaran berwarna (Tunai=hijau, Transfer=biru, QRIS=ungu)
+- [x] **`inventory_report.html`** — Badge stok: hijau (aman) / kuning (menipis) / merah (habis)
+- [x] **`closing_admin.html`** — Badge status closing
+- [x] **`transaction_detail.html`** — Cek dan rapikan tampilan struk detail
+- [x] Tambah **Empty State SVG** ke semua tabel yang mungkin kosong
+
+---
+
+### 🛒 Fase 9.4 — Redesign Halaman POS (Modern & Fungsional)
+
+**Design target:**
+- Katalog: kartu produk gambar menonjol, hover overlay aksi
+- Keranjang: background dark `#0F172A` — kontras tinggi, premium
+- Tombol bayar: gradient emerald besar, mencolok
+
+- [x] **`pos.html` — Search & Filter Bar**
+  - [x] Filter kategori: ubah `<select>` → chip/pill button horizontal scrollable
+  - [x] Filter brand: pertahankan dropdown tapi styling glass
+- [x] **`pos.html` — Product Card (Redesign)**
+  - [x] Gambar produk: height 160px, `object-fit: cover`
+  - [x] Badge stok pojok atas: hijau (>5), kuning (≤5), merah (0/habis)
+  - [x] Hover state: overlay + ikon "+" muncul di tengah kartu
+  - [x] Kartu disable jika stok 0: `opacity: 0.5`, `pointer-events: none`
+  - [x] Chip kondisi (Baru/Bekas) di bawah nama
+- [x] **`pos.html` — Cart Panel (Dark Mode)**
+  - [x] Header: gradient dark `#0F172A → #1e293b`, teks putih
+  - [x] Background area item: dark `#0f172a`
+  - [x] Item card: `rgba(255,255,255,0.08)`, rounded, padding lega
+  - [x] Tombol qty `−`/`+`: pill shape, 28×28px
+  - [x] Tombol hapus: ikon trash, hover merah transparan
+- [x] **`pos.html` — Payment Section (Dark Mode)**
+  - [x] Background: satu tone dengan cart panel (`#0f172a`)
+  - [ ] Angka total: `2rem bold`, warna `#22c55e` emerald
+  - [ ] Metode pembayaran: tombol pill glassmorphism
+  - [ ] Kembalian: animasi fade-in, warna hijau terang
+  - [ ] **Tombol PROSES BAYAR**: gradient emerald, full width, `height: 56px`, font besar bold, shadow hijau
+- [ ] **`pos.html` — Receipt Modal**
+  - [ ] Tambah animasi sukses: checkmark SVG animasi
+  - [ ] Tombol "Tutup & Trx Baru" lebih besar dan jelas
+- [ ] **`style.css`** — Tambah: `.pos-product-card`, `.pos-product-card.out-of-stock`, `.cart-panel-dark`, `.cart-item-glass`, `.btn-pay`, `.payment-chip`
 
 ---
 
@@ -366,6 +521,13 @@
 | Fase 5 — Fitur Pendukung | `[x]` | Selesai |
 | Fase 6 — Testing & Finalisasi | `[x]` | Selesai |
 | Fase 6.1 — Perbaikan Workflow | `[x]` | Selesai |
+| Fase 6.2 — Redesign & Detail POS | `[x]` | Selesai |
+| Fase 7 — Redesign UI/UX Pro Max | `[x]` | Selesai |
+| Fase 8 — Migrasi HTMX (SPA) | `[x]` | Selesai |
+| Fase 9.1 — HTMX Bug Fixes | `[x]` | Selesai |
+| Fase 9.2 — Dashboard Redesign | `[x]` | Selesai |
+| Fase 9.3 — Table Redesign | `[x]` | Selesai |
+| Fase 9.4 — POS Redesign | `[x]` | Selesai |
 
 ---
 

@@ -36,34 +36,41 @@
             <tbody>
                 {% for u in users %}
                 <tr>
-                    <td class="text-center text-muted">{{ forloop.counter }}</td>
-                    <td class="fw-bold" style="color: #334155;">{{ u.username }}</td>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ u.username }}</td>
                     <td>
                         {% if hasattr and u.userprofile.role == 'admin' %}
-                            <span class="badge bg-primary text-white border rounded-pill px-3">Admin</span>
+                            <span class="badge-glass badge-primary">Admin</span>
                         {% else %}
-                            <span class="badge bg-info text-white border rounded-pill px-3">Kasir</span>
+                            <span class="badge-glass badge-info">Kasir</span>
                         {% endif %}
                     </td>
                     <td class="text-muted">{{ u.userprofile.phone|default:'-' }}</td>
                     <td class="text-center">
                         {% if u.is_active %}
-                            <span class="badge bg-success status-badge">Active</span>
+                            <span class="badge-glass badge-active">Active</span>
                         {% else %}
-                            <span class="badge bg-danger status-badge">Inactive</span>
+                            <span class="badge-glass badge-inactive">Inactive</span>
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <button class="btn btn-sm btn-light btn-toggle-status rounded-circle border me-1" data-id="{{ u.id }}" title="Toggle Akses" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-warning" style="font-size: 16px; line-height: 30px;">power_settings_new</i>
+                        <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ u.id }}" title="Toggle Akses">
+                            <i class="material-icons">power_settings_new</i>
                         </button>
-                        <button class="btn btn-sm btn-light btn-edit-user rounded-circle border" data-id="{{ u.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
-                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        <button class="btn-action btn-action-edit btn-edit-user" data-id="{{ u.id }}" title="Edit">
+                            <i class="material-icons">edit</i>
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="6" class="text-center text-muted py-4">Belum ada data user.</td></tr>
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="material-icons">people_outline</i>
+                            <p>Belum ada data user.</p>
+                        </div>
+                    </td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -73,8 +80,8 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        $("#search-user").on("keyup", function() {
+    (function($) {
+        $("#search-user").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#user-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
@@ -84,17 +91,17 @@
         });
 
         // Add
-        $('#btn-add-user').click(function(){
+        $('#btn-add-user').off("click").on("click", function(){
             uni_modal("Tambah User Baru", "{% url 'users_save' %}");
         });
 
         // Edit
-        $('.btn-edit-user').click(function(){
+        $('.btn-edit-user').off("click").on("click", function(){
             uni_modal("Ubah Data User", "{% url 'users_save' %}?id=" + $(this).data('id'));
         });
 
         // Toggle Status
-        $('.btn-toggle-status').click(function(){
+        $('.btn-toggle-status').off("click").on("click", function(){
             start_loader();
             $.ajax({
                 url: "{% url 'users_toggle_status' %}",
@@ -103,14 +110,14 @@
                 data: { id: $(this).data('id') },
                 success: function(resp) {
                     if(resp.status == 'success') {
-                        location.reload();
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
                     } else {
-                        alert("Gagal merubah status.");
+                        showAlert("Gagal merubah status.");
                         end_loader();
                     }
                 }
             });
         });
-    });
+    })(jQuery);
 </script>
 {% endblock %}

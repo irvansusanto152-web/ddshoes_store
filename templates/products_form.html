@@ -124,12 +124,12 @@
                             $('#uni_modal').modal('hide');
                             end_loader();
                             // Optional alert
-                            alert('Produk berhasil ditambahkan!');
+                            showAlert('Produk berhasil ditambahkan!');
                         {% else %}
                             location.reload();
                         {% endif %}
                     } else {
-                        alert("Terjadi kesalahan saat menyimpan data.");
+                        showAlert("Terjadi kesalahan saat menyimpan data.");
                         end_loader();
                     }
                 }
