@@ -684,3 +684,75 @@ Tombol hapus di beberapa halaman langsung mengeksekusi penghapusan tanpa konfirm
 - [x] **`transaction_detail.html`** — Hapus `class="table-light"` dari `<thead>`
 - [x] Jalankan `python manage.py check` setelah semua fix selesai
 - [x] Commit & push semua perubahan
+
+---
+
+## 🐛 Fase 11 — Bug: Halaman POS Lambat via HTMX (Loading Spinner), Cepat saat Refresh
+
+| Fase 11 — POS HTMX Loading Bug | `[x]` | Selesai |
+
+---
+
+### 📋 Deskripsi Masalah
+
+**Gejala:**
+- Ketika klik menu **"Transaksi (POS)"** dari sidebar → halaman muncul dulu, baru *produk* muncul setelah ada jeda loading (terlihat spinner)
+- Ketika **refresh langsung** di browser (F5 / Ctrl+R) → produk langsung muncul tanpa spinner yang lama
+
+**Perbedaan perilaku ini menunjukkan dua jalur render yang berbeda.**
+
+---
+
+### 🔍 Analisis Root Cause
+
+**Kenapa via Klik Sidebar (HTMX):**
+1. HTMX mengintersep klik dan mengirim request `GET /pos/` dengan header `HX-Request: true`
+2. Server merespons hanya **fragmen HTML** (konten dalam `{% block pageContent %}`) tanpa tag `<script>` library eksternal yang sudah di-*load* di `<head>`
+3. HTMX melakukan `swap` DOM → konten `pos.html` masuk ke `#main-content`
+4. **Setelah swap selesai**, script IIFE `(function($){...})` di dalam `{% block extra_js %}` dieksekusi
+5. Baris pertama IIFE: `loadProducts()` dipanggil → membuat **AJAX request ke `/pos/api/products/`**
+6. Menunggu response dari server → inilah jeda loading (spinner muncul) → produk baru ditampilkan
+
+**Kenapa saat Refresh (Full Page Load):**
+1. Browser memuat halaman lengkap dari awal (full page load)
+2. Django merender halaman penuh termasuk `<html>`, `<head>`, `<body>`, semua script
+3. Semua script library (jQuery, Bootstrap) di-*load* dari `<head>`
+4. `{% block extra_js %}` dieksekusi → `loadProducts()` dipanggil
+5. Prosesnya sama (AJAX ke API), namun terasa lebih cepat karena:
+   - Tidak ada overhead **HTMX swap processing**
+   - Browser mungkin sudah cache response API dari sesi sebelumnya
+   - NProgress bar tidak muncul sehingga terasa berbeda
+
+**Kesimpulan:** Masalah bukan bug kritis — ini adalah **perilaku desain yang expected** karena produk memang di-*load* via AJAX terpisah (`pos_get_products` endpoint) bukan di-embed langsung ke HTML template. Namun user experience-nya terasa "lambat" saat via HTMX karena ada dua network request berurutan (1. HTMX load halaman, 2. AJAX load produk).
+
+---
+
+### 💡 Solusi yang Diusulkan
+
+**Opsi A — Embed Data Produk Langsung ke Template (Rekomendasi):**
+- Di `views.py`, kirim data produk awal langsung sebagai variabel context Django (`products_json`)
+- Di `pos.html`, pre-populate `productsList` dari variabel tersebut menggunakan `{{ products_json|safe }}`
+- `loadProducts()` tetap digunakan untuk filter/search, namun initial render tidak perlu AJAX
+- **Hasil:** Produk langsung muncul tanpa spinner saat pertama kali buka, baik via HTMX maupun refresh
+
+**Opsi B — Optimasi dengan `hx-trigger="intersect"` atau Pre-fetch:**
+- Menggunakan HTMX `hx-trigger="revealed"` atau pre-fetch sehingga request produk dikirim lebih awal sebelum swap selesai
+- Lebih kompleks dan risikonya lebih tinggi
+
+**Opsi C — Skeleton Loading (UX Improvement):**
+- Ganti spinner biasa dengan skeleton loading yang lebih premium agar terasa lebih cepat secara persepsi
+- Tidak menyelesaikan masalah kecepatan, hanya memperbaiki UX
+
+---
+
+### ✅ Checklist Perbaikan (Opsi A)
+
+- [ ] **`core/views.py`** — Di fungsi `pos_page`, tambahkan query produk aktif dan serialize ke JSON
+  ```python
+  import json
+  from django.core import serializers
+  
+- [ ] Test via browser refresh → produk harus tetap muncul instan
+- [ ] Test filter kategori, merek, dan search → masih berjalan normal
+- [ ] Jalankan `python manage.py check`
+- [ ] Commit & push perubahan

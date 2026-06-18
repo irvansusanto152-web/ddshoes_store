@@ -171,7 +171,8 @@
 {% block extra_js %}
 <script>
     let cart = [];
-    let productsList = [];
+    // productsList pre-populated from Django context — no AJAX needed on first load
+    let productsList = {{ initial_products_json|safe }};
 
     // Format currency
     function formatMoney(n) {
@@ -343,8 +344,8 @@
     }
 
     (function($) {
-        // Init
-        loadProducts();
+        // Render initial products immediately from embedded data (no spinner on first load)
+        renderProducts(productsList);
 
         // Filters
         let timeout = null;

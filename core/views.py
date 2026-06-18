@@ -525,12 +525,34 @@ def closing_admin(request):
 # --- POS / KASIR ---
 @login_required
 def pos_page(request):
+    import json
     if request.user.userprofile.role not in ['admin', 'kasir']:
         return redirect('dashboard')
-    
+
     categories = Categories.objects.all()
     brands = Brands.objects.all()
-    return render(request, 'pos.html', {'categories': categories, 'brands': brands})
+
+    # Embed initial product data to avoid extra AJAX request on first load
+    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
+    initial_products = []
+    for p in qs:
+        initial_products.append({
+            'id': p.id,
+            'name': p.name,
+            'brand': p.brand.name if p.brand else '-',
+            'size': p.size,
+            'condition': p.condition,
+            'price': float(p.sell_price),
+            'stock': p.stock,
+            'image': p.image.url if p.image else '',
+            'category_id': p.category_id,
+        })
+
+    return render(request, 'pos.html', {
+        'categories': categories,
+        'brands': brands,
+        'initial_products_json': json.dumps(initial_products),
+    })
 
 @login_required
 def pos_get_products(request):
