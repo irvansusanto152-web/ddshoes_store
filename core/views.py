@@ -56,7 +56,7 @@ def dashboard_view(request):
 
     # 4. Barang Masuk Hari Ini
     # Menjumlahkan total qty dari detail barang masuk hari ini
-    stockin_today = StockIn.objects.filter(received_date=today)
+    stockin_today = StockIns.objects.filter(received_date=today)
     total_barang_masuk = sum([sum([d.quantity for d in si.details.all()]) for si in stockin_today])
 
     # Top 5 best selling products
