@@ -32,4 +32,14 @@ urlpatterns = [
     path('stockin/', views.stockin_list, name='stockin_list'),
     path('stockin/save/', views.stockin_save, name='stockin_save'),
     path('stockin/detail/<int:pk>/', views.stockin_detail, name='stockin_detail'),
+
+    # Users
+    path('users/', views.users_list, name='users_list'),
+    path('users/save/', views.users_save, name='users_save'),
+    path('users/toggle/', views.users_toggle_status, name='users_toggle_status'),
+
+    # Reports & Closing (Admin)
+    path('sales-report/', views.sales_report, name='sales_report'),
+    path('inventory-report/', views.inventory_report, name='inventory_report'),
+    path('closing-admin/', views.closing_admin, name='closing_admin'),
 ]

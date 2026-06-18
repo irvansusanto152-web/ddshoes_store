@@ -6,7 +6,8 @@ from django.http import JsonResponse
 from django.db.models import Sum, Count, F
 from django.utils import timezone
 from datetime import timedelta
-from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers, StockIns, StockInDetails
+from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers, StockIns, StockInDetails, CashClosings, UserProfile
+from django.contrib.auth.models import User
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -371,3 +372,146 @@ def stockin_save(request):
     suppliers = Suppliers.objects.all().order_by('name')
     products = Products.objects.filter(status='active').select_related('brand', 'category').order_by('name')
     return render(request, 'stockin_form.html', {'suppliers': suppliers, 'products': products})
+
+# --- USERS ---
+@login_required
+def users_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    users = User.objects.select_related('userprofile').all().order_by('username')
+    return render(request, 'users.html', {'users': users})
+
+@login_required
+def users_save(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    if request.method == 'POST':
+        id = request.POST.get('id', '')
+        username = request.POST.get('username')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
+        phone = request.POST.get('phone', '')
+
+        if id:
+            u = User.objects.get(id=id)
+            u.username = username
+            if password:
+                u.set_password(password)
+            u.save()
+            up = u.userprofile
+            up.role = role
+            up.phone = phone
+            up.save()
+            messages.success(request, "Kasir/User berhasil diubah.")
+        else:
+            u = User.objects.create_user(username=username, password=password)
+            UserProfile.objects.create(user=u, role=role, phone=phone)
+            messages.success(request, "Kasir/User berhasil ditambahkan.")
+        return JsonResponse({'status': 'success'})
+
+    id = request.GET.get('id', '')
+    u = User.objects.get(id=id) if id else None
+    return render(request, 'users_form.html', {'user_obj': u})
+
+@login_required
+def users_toggle_status(request):
+    if request.method == 'POST':
+        id = request.POST.get('id')
+        u = User.objects.get(id=id)
+        if u.is_active:
+            u.is_active = False
+            msg = "Akun dinonaktifkan."
+        else:
+            u.is_active = True
+            msg = "Akun diaktifkan."
+        u.save()
+        messages.success(request, msg)
+        return JsonResponse({'status': 'success', 'is_active': u.is_active})
+
+# --- REPORTS ---
+@login_required
+def sales_report(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    cashier_id = request.GET.get('cashier_id')
+    payment_method = request.GET.get('payment_method')
+
+    qs = Transactions.objects.select_related('cashier').all().order_by('-transaction_date')
+
+    if start_date:
+        qs = qs.filter(transaction_date__date__gte=start_date)
+    if end_date:
+        qs = qs.filter(transaction_date__date__lte=end_date)
+    if cashier_id:
+        qs = qs.filter(cashier_id=cashier_id)
+    if payment_method:
+        qs = qs.filter(payment_method=payment_method)
+
+    cashiers = User.objects.filter(userprofile__role='kasir')
+    total_revenue = qs.aggregate(t=Sum('total_amount'))['t'] or 0
+
+    return render(request, 'sales_report.html', {
+        'transactions': qs,
+        'cashiers': cashiers,
+        'start_date': start_date,
+        'end_date': end_date,
+        'cashier_id': cashier_id,
+        'payment_method': payment_method,
+        'total_revenue': total_revenue
+    })
+
+@login_required
+def inventory_report(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    
+    brand_id = request.GET.get('brand_id')
+    category_id = request.GET.get('category_id')
+
+    qs = Products.objects.select_related('brand', 'category').filter(status='active').order_by('name')
+    if brand_id:
+        qs = qs.filter(brand_id=brand_id)
+    if category_id:
+        qs = qs.filter(category_id=category_id)
+
+    # Calculate total value dynamically or using annotate
+    total_buy_value = sum([p.buy_price * p.stock for p in qs if p.stock > 0])
+    total_sell_value = sum([p.sell_price * p.stock for p in qs if p.stock > 0])
+
+    brands = Brands.objects.all()
+    categories = Categories.objects.all()
+
+    return render(request, 'inventory_report.html', {
+        'products': qs,
+        'brands': brands,
+        'categories': categories,
+        'brand_id': brand_id,
+        'category_id': category_id,
+        'total_buy_value': total_buy_value,
+        'total_sell_value': total_sell_value
+    })
+
+@login_required
+def closing_admin(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    
+    date_filter = request.GET.get('date')
+    cashier_id = request.GET.get('cashier_id')
+
+    qs = CashClosings.objects.select_related('cashier').all().order_by('-closing_date', '-id')
+    if date_filter:
+        qs = qs.filter(closing_date=date_filter)
+    if cashier_id:
+        qs = qs.filter(cashier_id=cashier_id)
+
+    cashiers = User.objects.filter(userprofile__role='kasir')
+
+    return render(request, 'closing_admin.html', {
+        'closings': qs,
+        'cashiers': cashiers,
+        'date_filter': date_filter,
+        'cashier_id': cashier_id
+    })

@@ -1,0 +1,58 @@
+<div class="container-fluid">
+    <form action="" id="user-form">
+        {% csrf_token %}
+        <input type="hidden" name="id" value="{{ user_obj.id|default:'' }}">
+        
+        <div class="form-group mb-3">
+            <label for="username" class="control-label mb-1 fw-bold text-secondary">Username</label>
+            <input type="text" name="username" id="username" class="form-control saas-input" value="{{ user_obj.username|default:'' }}" required placeholder="Contoh: kasir01" {% if user_obj %}readonly{% endif %}>
+            {% if user_obj %}
+            <small class="text-muted">Username tidak dapat diubah setelah dibuat.</small>
+            {% endif %}
+        </div>
+        
+        <div class="form-group mb-3">
+            <label for="role" class="control-label mb-1 fw-bold text-secondary">Peran (Role)</label>
+            <select name="role" id="role" class="form-select saas-input" required>
+                <option value="kasir" {% if user_obj.userprofile.role == 'kasir' %}selected{% endif %}>Kasir</option>
+                <option value="admin" {% if user_obj.userprofile.role == 'admin' %}selected{% endif %}>Admin</option>
+            </select>
+        </div>
+        
+        <div class="form-group mb-3">
+            <label for="phone" class="control-label mb-1 fw-bold text-secondary">Nomor HP</label>
+            <input type="text" name="phone" id="phone" class="form-control saas-input" value="{{ user_obj.userprofile.phone|default:'' }}" placeholder="Opsional">
+        </div>
+        
+        <div class="form-group mb-3">
+            <label for="password" class="control-label mb-1 fw-bold text-secondary">Password {% if user_obj %}(Isi jika ingin diubah){% endif %}</label>
+            <input type="password" name="password" id="password" class="form-control saas-input" placeholder="Password rahasia" {% if not user_obj %}required{% endif %}>
+        </div>
+    </form>
+</div>
+
+<script>
+    $(function() {
+        $('#user-form').submit(function(e) {
+            e.preventDefault();
+            start_loader();
+            $.ajax({
+                url: "{% url 'users_save' %}",
+                data: new FormData($(this)[0]),
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(resp) {
+                    if (resp.status == 'success') {
+                        location.reload();
+                    } else {
+                        alert("Terjadi kesalahan saat menyimpan data.");
+                        end_loader();
+                    }
+                }
+            });
+        });
+    });
+</script>

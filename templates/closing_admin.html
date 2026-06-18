@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Closing Kasir{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Data Closing Kasir</h2>
+        <p>Pantau rekapan tutup kasir dan selisih uang tunai.</p>
+    </div>
+</div>
+
+<div class="glass-panel mb-4 d-print-none">
+    <form method="GET" action="{% url 'closing_admin' %}" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-muted fw-bold mb-1">Tanggal Closing</label>
+            <input type="date" name="date" class="form-control saas-input" value="{{ date_filter|default:'' }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted fw-bold mb-1">Kasir</label>
+            <select name="cashier_id" class="form-select saas-input">
+                <option value="">Semua Kasir</option>
+                {% for c in cashiers %}
+                <option value="{{ c.id }}" {% if cashier_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100 fw-bold">Terapkan Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="glass-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Tanggal</th>
+                    <th>Kasir</th>
+                    <th class="text-end">Sistem (Tunai)</th>
+                    <th class="text-end">Aktual Kas</th>
+                    <th class="text-end">Selisih</th>
+                    <th class="text-center">Status</th>
+                    <th>Catatan</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cl in closings %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ cl.closing_date|date:"d M Y" }} <br><small class="text-muted">{{ cl.submitted_at|time:"H:i" }}</small></td>
+                    <td>{{ cl.cashier.username }}</td>
+                    <td class="text-end text-muted">Rp {{ cl.system_cash_total|intcomma }}</td>
+                    <td class="text-end fw-bold">Rp {{ cl.actual_cash|intcomma }}</td>
+                    <td class="text-end fw-bold {% if cl.cash_difference < 0 %}text-danger{% elif cl.cash_difference > 0 %}text-warning{% else %}text-success{% endif %}">
+                        Rp {{ cl.cash_difference|intcomma }}
+                    </td>
+                    <td class="text-center">
+                        {% if cl.cash_difference == 0 %}
+                            <span class="badge bg-success-subtle text-success border px-3 rounded-pill">MATCH</span>
+                        {% else %}
+                            <span class="badge bg-danger-subtle text-danger border px-3 rounded-pill">SELISIH</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted text-truncate" style="max-width: 150px;">{{ cl.notes|default:'-' }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Belum ada data closing kasir.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

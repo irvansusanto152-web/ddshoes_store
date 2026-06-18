@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Laporan Inventory{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Laporan Inventory & Nilai Aset</h2>
+        <p>Pantau stok barang saat ini beserta valuasi modal dan potensi pendapatan.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="material-icons me-1">print</i> Cetak Laporan
+        </button>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%); color: white;">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                    <i class="material-icons" style="font-size: 30px;">account_balance_wallet</i>
+                </div>
+                <div>
+                    <h6 class="mb-1 text-white-50">Total Modal (Nilai Beli)</h6>
+                    <h3 class="mb-0 fw-bold">Rp {{ total_buy_value|intcomma }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
+            <div class="card-body p-4 d-flex align-items-center">
+                <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 60px; height: 60px;">
+                    <i class="material-icons" style="font-size: 30px;">savings</i>
+                </div>
+                <div>
+                    <h6 class="mb-1 text-white-50">Total Potensi Penjualan (Nilai Jual)</h6>
+                    <h3 class="mb-0 fw-bold">Rp {{ total_sell_value|intcomma }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="glass-panel mb-4 d-print-none">
+    <form method="GET" action="{% url 'inventory_report' %}" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label text-muted fw-bold mb-1">Merek</label>
+            <select name="brand_id" class="form-select saas-input">
+                <option value="">Semua Merek</option>
+                {% for b in brands %}
+                <option value="{{ b.id }}" {% if brand_id == b.id|stringformat:"s" %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label text-muted fw-bold mb-1">Kategori</label>
+            <select name="category_id" class="form-select saas-input">
+                <option value="">Semua Kategori</option>
+                {% for c in categories %}
+                <option value="{{ c.id }}" {% if category_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-primary w-100 fw-bold">Terapkan Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="glass-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Nama Produk</th>
+                    <th>Merek / Kategori</th>
+                    <th class="text-center">Kondisi</th>
+                    <th class="text-center">Stok</th>
+                    <th class="text-end">Harga Beli</th>
+                    <th class="text-end">Harga Jual</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold">{{ p.name }} <br><small class="text-muted">{{ p.size }}</small></td>
+                    <td>{{ p.brand.name }} <br><small class="text-muted">{{ p.category.name }}</small></td>
+                    <td class="text-center"><span class="badge border bg-light text-dark">{{ p.condition }}</span></td>
+                    <td class="text-center fw-bold {% if p.stock <= 3 %}text-danger{% else %}text-success{% endif %}">{{ p.stock }}</td>
+                    <td class="text-end text-muted">Rp {{ p.buy_price|intcomma }}</td>
+                    <td class="text-end fw-bold" style="color: #6366f1;">Rp {{ p.sell_price|intcomma }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data inventory aktif.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body { background: white; }
+        .sidebar, .topbar, .saas-header, .btn, .sh-actions, .d-print-none { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .glass-panel { border: none !important; box-shadow: none !important; }
+        table { border-collapse: collapse !important; width: 100% !important; }
+        th, td { border: 1px solid #ddd !important; padding: 8px !important; }
+        .card { border: 1px solid #ddd !important; color: black !important; background: transparent !important; }
+        .text-white-50 { color: #666 !important; }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Manajemen Akun User{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Manajemen User & Kasir</h2>
+        <p>Kelola akses login untuk sistem.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-primary btn-masuk" id="btn-add-user">
+            <i class="material-icons me-1">person_add</i> Tambah User Baru
+        </button>
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="saas-toolbar mb-3">
+        <div class="st-search" style="position: relative; width: 100%; max-width: 300px;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-user" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari username atau peran...">
+        </div>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table" id="user-table">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Username</th>
+                    <th>Peran (Role)</th>
+                    <th>No. HP</th>
+                    <th class="text-center">Status</th>
+                    <th width="15%" class="text-center">Aksi</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #334155;">{{ u.username }}</td>
+                    <td>
+                        {% if hasattr and u.userprofile.role == 'admin' %}
+                            <span class="badge bg-primary text-white border rounded-pill px-3">Admin</span>
+                        {% else %}
+                            <span class="badge bg-info text-white border rounded-pill px-3">Kasir</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted">{{ u.userprofile.phone|default:'-' }}</td>
+                    <td class="text-center">
+                        {% if u.is_active %}
+                            <span class="badge bg-success status-badge">Active</span>
+                        {% else %}
+                            <span class="badge bg-danger status-badge">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-light btn-toggle-status rounded-circle border me-1" data-id="{{ u.id }}" title="Toggle Akses" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-warning" style="font-size: 16px; line-height: 30px;">power_settings_new</i>
+                        </button>
+                        <button class="btn btn-sm btn-light btn-edit-user rounded-circle border" data-id="{{ u.id }}" title="Edit" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">edit</i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">Belum ada data user.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $("#search-user").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#user-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) { // exclude empty message
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
+        });
+
+        // Add
+        $('#btn-add-user').click(function(){
+            uni_modal("Tambah User Baru", "{% url 'users_save' %}");
+        });
+
+        // Edit
+        $('.btn-edit-user').click(function(){
+            uni_modal("Ubah Data User", "{% url 'users_save' %}?id=" + $(this).data('id'));
+        });
+
+        // Toggle Status
+        $('.btn-toggle-status').click(function(){
+            start_loader();
+            $.ajax({
+                url: "{% url 'users_toggle_status' %}",
+                method: "POST",
+                headers: {'X-CSRFToken': '{{ csrf_token }}'},
+                data: { id: $(this).data('id') },
+                success: function(resp) {
+                    if(resp.status == 'success') {
+                        location.reload();
+                    } else {
+                        alert("Gagal merubah status.");
+                        end_loader();
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

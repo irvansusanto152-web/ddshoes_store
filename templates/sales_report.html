@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Laporan Penjualan{% endblock %}
+{% block pageContent %}
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Laporan Penjualan</h2>
+        <p>Rekapitulasi seluruh transaksi penjualan.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="material-icons me-1">print</i> Cetak / Ekspor PDF
+        </button>
+    </div>
+</div>
+
+<div class="glass-panel mb-4 d-print-none">
+    <form method="GET" action="{% url 'sales_report' %}" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label text-muted fw-bold mb-1">Mulai Tanggal</label>
+            <input type="date" name="start_date" class="form-control saas-input" value="{{ start_date|default:'' }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-muted fw-bold mb-1">Sampai Tanggal</label>
+            <input type="date" name="end_date" class="form-control saas-input" value="{{ end_date|default:'' }}">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-muted fw-bold mb-1">Kasir</label>
+            <select name="cashier_id" class="form-select saas-input">
+                <option value="">Semua Kasir</option>
+                {% for c in cashiers %}
+                <option value="{{ c.id }}" {% if cashier_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label text-muted fw-bold mb-1">Metode Bayar</label>
+            <select name="payment_method" class="form-select saas-input">
+                <option value="">Semua Metode</option>
+                <option value="tunai" {% if payment_method == 'tunai' %}selected{% endif %}>Tunai</option>
+                <option value="transfer_bri" {% if payment_method == 'transfer_bri' %}selected{% endif %}>Transfer BRI</option>
+                <option value="qris" {% if payment_method == 'qris' %}selected{% endif %}>QRIS</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100 fw-bold">Terapkan Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="glass-panel">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table">
+            <thead class="table-light">
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>No. Transaksi</th>
+                    <th>Tanggal & Waktu</th>
+                    <th>Kasir</th>
+                    <th>Metode Bayar</th>
+                    <th class="text-end">Total Pembayaran</th>
+                    <th width="10%" class="text-center d-print-none">Detail</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="text-center text-muted">{{ forloop.counter }}</td>
+                    <td class="fw-bold">TRX-{{ t.id|stringformat:"05d" }}</td>
+                    <td>{{ t.transaction_date|date:"d M Y, H:i" }}</td>
+                    <td>{{ t.cashier.username|default:'-' }}</td>
+                    <td>
+                        {% if t.payment_method == 'tunai' %}
+                            <span class="badge bg-success-subtle text-success border">Tunai</span>
+                        {% elif t.payment_method == 'transfer_bri' %}
+                            <span class="badge bg-info-subtle text-info border">Transfer BRI</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning border">QRIS</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end fw-bold text-success">Rp {{ t.total_amount|intcomma }}</td>
+                    <td class="text-center d-print-none">
+                        <button class="btn btn-sm btn-light rounded-circle border btn-detail" data-id="{{ t.id }}" title="Lihat Detail" style="width:32px; height:32px; padding:0;">
+                            <i class="material-icons text-primary" style="font-size: 16px; line-height: 30px;">receipt_long</i>
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data transaksi.</td></tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="5" class="text-end fw-bold">Total Pendapatan Terfilter:</th>
+                    <th class="text-end fw-bold fs-5 text-success">
+                        Rp {{ total_revenue|intcomma }}
+                    </th>
+                    <th class="d-print-none"></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<style>
+    @media print {
+        body { background: white; }
+        .sidebar, .topbar, .saas-header, .btn, .sh-actions, .d-print-none { display: none !important; }
+        .main-content { margin-left: 0 !important; padding: 0 !important; }
+        .glass-panel { border: none !important; box-shadow: none !important; }
+        table { border-collapse: collapse !important; width: 100% !important; }
+        th, td { border: 1px solid #ddd !important; padding: 8px !important; }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('.btn-detail').click(function() {
+            // we will need a view for detail, but for now we just alert or show a modal
+            // Let's assume we have a generic detail modal or we can add it later
+            alert("Detail transaksi #" + $(this).data('id') + " (Fitur detail akan ditambahkan di Fase 4 POS)");
+        });
+    });
+</script>
+{% endblock %}

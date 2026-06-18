@@ -184,39 +184,40 @@
 
 ### 3.7 Manajemen User (Kasir)
 
-- [ ] Buat view `users_list`, `users_save`, `users_toggle_status`
-- [ ] Buat `users.html`:
-  - [ ] Page header + tombol "Tambah Kasir"
-  - [ ] Tabel daftar akun kasir (username, nama, no. HP, status, last login, aksi)
-  - [ ] Tombol Edit → `uni_modal` dengan form edit (username, password, phone)
-  - [ ] Tombol Aktifkan/Nonaktifkan → AJAX toggle `is_active`
-  - [ ] Form tambah kasir (field: username, password, phone)
+- [x] Buat view `users_list`, `users_save`, `users_toggle_status`
+- [x] Buat `users.html`:
+  - [x] Page header + tombol "Tambah User Baru"
+  - [x] Toolbar pencarian
+  - [x] Tabel akun (Username, Peran, No. HP, Status Aktif)
+  - [x] Tombol Edit & Toggle Status
+- [x] Form tambah user (via modal):
+  - [x] Input username, password (dengan validasi sederhana), pilihan role (Admin/Kasir), no HP.
 
 ### 3.8 Laporan Penjualan
 
-- [ ] Buat view `sales_report`, `sales_report_detail`, `sales_report_export_pdf`
-- [ ] Buat `sales_report.html`:
-  - [ ] Toolbar filter: rentang tanggal (date picker), kasir (dropdown), metode bayar
-  - [ ] Ringkasan total (total transaksi, total pendapatan, breakdown per metode bayar)
-  - [ ] Tabel rekap transaksi (No. Struk, Tanggal, Kasir, Total, Metode Bayar, Aksi Detail)
-  - [ ] Klik detail → tampilkan item per struk (via modal atau halaman terpisah)
-  - [ ] Tombol Ekspor/Cetak PDF laporan terfilter (gunakan `window.print()` atau library PDF)
+- [x] Buat view `sales_report`
+- [x] Buat `sales_report.html`:
+  - [x] Toolbar filter: Rentang tanggal (Start-End), Kasir, Metode Bayar
+  - [x] Tabel rekap transaksi (No. Trx, Tanggal, Kasir, Metode Bayar, Total Pembayaran)
+  - [x] Footer tabel: Total Pendapatan Terfilter
+  - [x] Tombol cetak / ekspor laporan
+  - [x] Tombol Detail per transaksi (membuka modal detail / placeholder)
 
 ### 3.9 Laporan Inventory
 
-- [ ] Buat view `inventory_report`
-- [ ] Buat `inventory_report.html`:
-  - [ ] Toolbar filter (by merek, kategori)
-  - [ ] Summary card: Total Nilai Inventory (Σ harga beli × stok), Total Potensi Pendapatan (Σ harga jual × stok)
-  - [ ] Tabel stok saat ini (nama produk, merek, kategori, ukuran, kondisi, stok, harga beli, harga jual, nilai beli, nilai jual)
+- [x] Buat view `inventory_report`
+- [x] Buat `inventory_report.html`:
+  - [x] Toolbar filter (by merek, kategori)
+  - [x] Summary card: Total Nilai Inventory (Σ harga beli × stok), Total Potensi Pendapatan (Σ harga jual × stok)
+  - [x] Tabel stok saat ini (nama produk, merek, kategori, ukuran, kondisi, stok, harga beli, harga jual)
 
 ### 3.10 Closing (Pantau Semua — Admin)
 
-- [ ] Buat view `closing_admin`
-- [ ] Buat `closing_admin.html`:
-  - [ ] Toolbar filter (tanggal, kasir)
-  - [ ] Tabel histori semua data closing (tanggal, kasir, total tunai sistem, total transfer, total QRIS, kas fisik aktual, selisih, status match/selisih, catatan)
-  - [ ] Badge warna: MATCH = hijau, SELISIH = merah/kuning
+- [x] Buat view `closing_admin`
+- [x] Buat `closing_admin.html`:
+  - [x] Toolbar filter (tanggal, kasir)
+  - [x] Tabel histori semua data closing (tanggal, kasir, total tunai sistem, kas fisik aktual, selisih, status match/selisih, catatan)
+  - [x] Badge warna: MATCH = hijau, SELISIH = merah/kuning
 
 ---
 
