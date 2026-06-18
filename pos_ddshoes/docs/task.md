@@ -690,6 +690,7 @@ Tombol hapus di beberapa halaman langsung mengeksekusi penghapusan tanpa konfirm
 ## 🐛 Fase 11 — Bug: Halaman POS Lambat via HTMX (Loading Spinner), Cepat saat Refresh
 
 | Fase 11 — POS HTMX Loading Bug | `[x]` | Selesai |
+| Fase 12 — Bypass HTMX Halaman POS | `[x]` | Selesai |
 
 ---
 
@@ -752,7 +753,25 @@ Tombol hapus di beberapa halaman langsung mengeksekusi penghapusan tanpa konfirm
   import json
   from django.core import serializers
   
-- [ ] Test via browser refresh → produk harus tetap muncul instan
-- [ ] Test filter kategori, merek, dan search → masih berjalan normal
-- [ ] Jalankan `python manage.py check`
-- [ ] Commit & push perubahan
+- [x] Test via browser refresh → produk harus tetap muncul instan
+- [x] Test filter kategori, merek, dan search → masih berjalan normal
+- [x] Jalankan `python manage.py check`
+- [x] Commit & push perubahan
+
+---
+
+## 🚀 Fase 12 — Bypass HTMX Khusus Halaman POS
+
+| Fase 12 — Bypass HTMX | `[x]` | Selesai |
+
+---
+
+### 📋 Deskripsi Masalah
+Halaman POS adalah halaman transaksional yang kompleks dan menyimpan state keranjang belanja sementara. Untuk menghindari risiko *memory leak* dari Single Page Application (SPA), penumpukan event listener HTMX, atau state yang kotor saat pindah-pindah halaman, halaman POS diputuskan untuk menggunakan **Full Page Reload**.
+
+### ✅ Checklist Perbaikan
+- [x] **`navigation.html`** — Hapus `hx-get`, `hx-target`, `hx-push-url` pada link menu Transaksi (POS) di bagian Admin.
+- [x] **`navigation.html`** — Ubah `href="javascript:void(0);"` menjadi `href="{% url 'pos_page' %}"`.
+- [x] **`navigation.html`** — Lakukan hal yang sama untuk link menu Transaksi (POS) di bagian Kasir.
+- [x] Jalankan `python manage.py check`.
+- [x] Commit & push perubahan.

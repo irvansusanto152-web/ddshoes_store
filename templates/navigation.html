@@ -40,7 +40,7 @@
                 </li>
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'pos_page' %}active{% endif %}" 
-                       hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
+                       href="{% url 'pos_page' %}">
                         <i class="material-icons text-warning">point_of_sale</i>
                         <span class="text-warning fw-bold">Transaksi (POS)</span>
                     </a>
@@ -130,7 +130,7 @@
                 <div class="sb-section-label">KASIR MENU</div>
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'pos_page' %}active{% endif %}" 
-                       hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
+                       href="{% url 'pos_page' %}">
                         <i class="material-icons">point_of_sale</i>
                         <span>Transaksi (POS)</span>
                     </a>
