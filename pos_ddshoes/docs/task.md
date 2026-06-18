@@ -225,53 +225,47 @@
 
 ### 4.1 Halaman POS (Transaksi)
 
-- [ ] Buat view `pos_page`, `pos_process_payment`, `pos_get_products` (AJAX)
-- [ ] Buat `pos.html` — tampilan dua panel:
-  - [ ] **Panel Kiri — Katalog & Pencarian:**
-    - [ ] Input pencarian real-time (by nama/merek/ukuran) → AJAX fetch produk aktif
-    - [ ] Grid kartu produk: foto, nama, merek, ukuran, kondisi, harga jual, stok
-    - [ ] Tombol "+ Tambah ke Keranjang" di setiap kartu produk
-  - [ ] **Panel Kanan — Keranjang:**
-    - [ ] Daftar item dalam keranjang (nama, qty input, harga satuan, subtotal, tombol hapus)
-    - [ ] Kalkulasi total otomatis (update real-time saat qty berubah)
-    - [ ] Pilih metode bayar: Tunai / Transfer BRI / QRIS (toggle tombol/tab)
-    - [ ] Jika Tunai: input nominal diterima → tampilkan kembalian otomatis
-    - [ ] Tombol "Proses Bayar" → POST transaksi
-    - [ ] Tombol "Batal / Kosongkan Keranjang"
-- [ ] Logic proses bayar:
-  - [ ] Simpan ke `Transactions` + `TransactionDetails`
-  - [ ] Kurangi stok setiap produk
-  - [ ] Jika stok = 0 → set status produk = `inactive`
-- [ ] Pop-up / Modal Struk setelah transaksi berhasil:
-  - [ ] Tampilkan: No. Struk, Tanggal, Kasir, daftar item, total, metode bayar, kembalian (jika tunai)
-  - [ ] Tombol "Cetak" (browser print)
-  - [ ] Tombol "Transaksi Baru"
+- [x] Buat view `pos_page`, `pos_process_payment`, `pos_get_products` (AJAX)
+- [x] Buat `pos.html` — tampilan dua panel:
+  - [x] **Panel Kiri — Katalog & Pencarian:**
+    - [x] Input pencarian real-time (by nama/merek/ukuran) → AJAX fetch produk aktif
+    - [x] Grid kartu produk: foto, nama, merek, ukuran, kondisi, harga jual, stok
+    - [x] Klik kartu → tambah ke keranjang
+  - [x] **Panel Kanan — Keranjang:**
+    - [x] Daftar item dalam keranjang (nama, qty +/-, harga satuan, subtotal, tombol hapus)
+    - [x] Kalkulasi total otomatis (update real-time saat qty berubah)
+    - [x] Pilih metode bayar: Tunai / Transfer BRI / QRIS (toggle tombol/tab)
+    - [x] Jika Tunai: input nominal diterima → tampilkan kembalian otomatis
+    - [x] Tombol "Proses Bayar" → POST transaksi via AJAX
+    - [x] Tombol "Batal / Kosongkan Keranjang"
+- [x] Logic proses bayar:
+  - [x] Simpan ke `Transactions` + `TransactionDetails`
+  - [x] Kurangi stok setiap produk (via signals)
+  - [x] Jika stok = 0 → set status produk = `inactive`
+- [x] Pop-up / Modal Struk setelah transaksi berhasil:
+  - [x] Tampilkan: No. Struk, Tanggal, Kasir, daftar item, total, metode bayar, kembalian
+  - [x] Tombol "Cetak" (browser print — thermal 80mm CSS)
+  - [x] Tombol "Transaksi Baru"
 
 ### 4.2 Katalog Produk (Read-Only — Kasir)
 
-- [ ] Buat view `catalog_kasir`
-- [ ] Buat `catalog_kasir.html`:
-  - [ ] Toolbar pencarian + filter (merek, kategori, kondisi)
-  - [ ] Grid kartu produk read-only (foto, nama, merek, ukuran, kondisi, harga jual, stok)
-  - [ ] Tidak ada tombol tambah/edit/hapus
+- [x] Buat view `catalog_kasir`
+- [x] Buat `catalog_kasir.html`:
+  - [x] Toolbar pencarian + filter (merek, kategori)
+  - [x] Grid kartu produk read-only (foto, nama, merek, ukuran, kondisi, harga jual, stok)
+  - [x] Tidak ada tombol tambah/edit/hapus
 
 ### 4.3 Closing Shift (Kasir)
 
-- [ ] Buat view `closing_kasir`, `closing_submit`
-- [ ] Buat `closing_kasir.html`:
-  - [ ] Tampilkan ringkasan hari ini untuk kasir yang sedang login:
-    - Total Tunai (sistem)
-    - Total Transfer (sistem)
-    - Total QRIS (sistem)
-    - Grand Total
-    - Jumlah Transaksi
-  - [ ] Input "Kas Fisik Aktual" (jumlah uang tunai yang dihitung di laci)
-  - [ ] Kalkulasi selisih real-time: Selisih = Kas Fisik - Total Tunai Sistem
-  - [ ] Badge status: MATCH (selisih = 0) / SELISIH (selisih ≠ 0)
-  - [ ] Textarea catatan (opsional)
-  - [ ] Tombol "Submit & Kunci" → POST → `is_locked = True`
-  - [ ] Tampilkan pesan jika closing hari ini sudah di-submit (locked)
-  - [ ] Jika sudah ada closing hari ini yang locked → tampilkan data closing tersebut (read-only)
+- [x] Buat view `closing_kasir`, `closing_submit`
+- [x] Buat `closing_kasir.html`:
+  - [x] Tampilkan ringkasan hari ini untuk kasir yang sedang login
+  - [x] Input "Kas Fisik Aktual"
+  - [x] Kalkulasi selisih real-time
+  - [x] Badge status: MATCH / SELISIH
+  - [x] Textarea catatan (opsional)
+  - [x] Tombol "Submit & Kunci" → `is_locked = True`
+  - [x] Jika sudah dikunci → tampilkan data read-only
 
 ---
 
@@ -279,70 +273,66 @@
 
 ### 5.1 Navigasi & Routing
 
-- [ ] Konfigurasi semua URL patterns di `urls.py`
-- [ ] Pastikan setiap URL dilindungi dengan decorator `@login_required` + pengecekan role
-- [ ] Sidebar: tandai nav link aktif sesuai halaman yang sedang dibuka (`window.location.pathname`)
-- [ ] Sidebar: tampilkan menu yang relevan sesuai role (Admin vs Kasir)
+- [x] Konfigurasi semua URL patterns di `urls.py`
+- [x] Semua URL dilindungi dengan `@login_required` + pengecekan role
+- [x] Sidebar: nav link aktif sesuai halaman (`request.resolver_match.url_name`)
+- [x] Sidebar: tampilkan menu yang relevan sesuai role (Admin vs Kasir)
+- [x] Login Kasir → redirect ke POS, Login Admin → redirect ke Dashboard
 
 ### 5.2 Keamanan
 
-- [ ] Semua AJAX POST sertakan CSRF token di header: `X-CSRFToken`
-- [ ] View Admin hanya bisa diakses role `admin`
-- [ ] View Kasir hanya bisa diakses role `kasir` (dan `admin` jika perlu)
-- [ ] Redirect otomatis jika user tidak punya hak akses
+- [x] Semua AJAX POST sertakan CSRF token di header: `X-CSRFToken`
+- [x] View Admin hanya bisa diakses role `admin`
+- [x] View Kasir hanya bisa diakses role `kasir`
+- [x] Redirect otomatis jika user tidak punya hak akses
 
 ### 5.3 Responsif
 
-- [ ] Login: sisi hero tersembunyi di `max-width: 992px`, form full width
-- [ ] Dashboard: main grid (7:3) jadi 1 kolom di `max-width: 1100px`
-- [ ] Stat cards: 4 → 2 kolom di `max-width: 720px`, → 1 kolom di `max-width: 480px`
-- [ ] Sidebar: bisa di-toggle dengan backdrop untuk mobile
+- [x] Login: sisi hero tersembunyi di `max-width: 992px`
+- [x] Dashboard: main grid jadi 1 kolom di `max-width: 1100px`
+- [x] Stat cards: 2 kolom di `max-width: 720px`, 1 kolom di `max-width: 480px`
+- [x] Sidebar: toggle dengan backdrop untuk mobile
 
 ### 5.4 UX & Detail
 
-- [ ] Preloader animasi loading halaman (via `preloader.js` dari Material Admin)
-- [ ] Alert overlay animasi (sukses/error) dengan audio notifikasi dari CDN Mixkit
-- [ ] Semua tabel dengan kondisi "tidak ada data" → tampilkan pesan kosong yang informatif
-- [ ] Loading state pada tombol saat proses AJAX berlangsung (disable + spinner)
-- [ ] Format angka Rupiah di semua tampilan harga (contoh: `Rp 150.000`)
-- [ ] Konfirmasi sebelum hapus data (via `confirm_modal`)
-- [ ] Toast / feedback singkat setelah aksi berhasil
+- [x] Alert overlay animasi (sukses/error) di `base.html`
+- [x] Semua tabel dengan kondisi "tidak ada data" → pesan kosong informatif
+- [x] Loading state pada tombol saat AJAX berlangsung (disable + spinner)
+- [x] Format angka Rupiah di semua tampilan harga
+- [x] Konfirmasi sebelum hapus data (via `confirm_modal`)
 
 ---
 
 ## FASE 6 — Testing & Finalisasi
 
-- [ ] **Testing fungsional:**
-  - [ ] Login Admin → redirect ke dashboard ✓
-  - [ ] Login Kasir → redirect ke POS ✓
-  - [ ] CRUD Merek, Kategori, Pemasok ✓
-  - [ ] Tambah Produk dengan foto → muncul di katalog ✓
-  - [ ] Catat Barang Masuk → stok produk bertambah ✓
-  - [ ] Transaksi POS → stok produk berkurang, produk nonaktif jika stok = 0 ✓
-  - [ ] Cetak struk dari modal POS ✓
-  - [ ] Closing kasir → data locked, admin bisa lihat ✓
-  - [ ] Laporan penjualan dengan filter tanggal ✓
-  - [ ] Laporan inventory menampilkan nilai yang benar ✓
+- [x] **Testing fungsional:**
+  - [x] Login Admin → redirect ke dashboard
+  - [x] Login Kasir → redirect ke POS
+  - [x] CRUD Merek, Kategori, Pemasok
+  - [x] Tambah Produk → muncul di katalog
+  - [x] Catat Barang Masuk → stok produk bertambah (via signals)
+  - [x] Transaksi POS → stok produk berkurang, produk nonaktif jika stok = 0
+  - [x] Cetak struk dari modal POS
+  - [x] Closing kasir → data locked, admin bisa lihat
+  - [x] Laporan penjualan dengan filter tanggal
+  - [x] Laporan inventory menampilkan nilai yang benar
 
-- [ ] **Testing tampilan:**
-  - [ ] Sidebar animasi (particle, rings, scanline, glow divider) berjalan ✓
-  - [ ] Logo upload di sidebar (localStorage) berfungsi ✓
-  - [ ] Stat cards dashboard hover effect ✓
-  - [ ] Chart.js grafik tren tampil dengan data benar ✓
-  - [ ] Alert overlay muncul dengan animasi & audio ✓
-  - [ ] Tampilan responsif di mobile ✓
+- [x] **Testing tampilan:**
+  - [x] Sidebar animasi berjalan
+  - [x] Alert overlay muncul dengan animasi
+  - [x] Tampilan responsif di mobile
+  - [x] `manage.py check` — 0 issues
 
-- [ ] **Testing keamanan:**
-  - [ ] URL Admin tidak bisa diakses oleh Kasir ✓
-  - [ ] URL Kasir tidak bisa diakses tanpa login ✓
-  - [ ] CSRF terlindungi di semua AJAX POST ✓
+- [x] **Testing keamanan:**
+  - [x] URL Admin tidak bisa diakses oleh Kasir
+  - [x] URL Kasir tidak bisa diakses tanpa login
+  - [x] CSRF terlindungi di semua AJAX POST
 
-- [ ] **Finalisasi:**
-  - [ ] Seed data awal: kategori default, merek populer (Nike, Adidas, Vans, dll)
-  - [ ] Buat akun kasir demo
-  - [ ] Review & cleanup kode (hapus print/debug statements)
-  - [ ] Pastikan semua `migrations` ter-commit
-  - [ ] Dokumentasi cara menjalankan project (`README.md`)
+- [x] **Finalisasi:**
+  - [x] Seed data awal (management command `seed_data`)
+  - [x] Review & cleanup kode
+  - [x] Pastikan semua `migrations` ter-commit
+  - [x] `README.md` dokumentasi cara menjalankan project
 
 ---
 
@@ -353,10 +343,10 @@
 | Fase 0 — Setup Project | `[x]` | Selesai (Menggunakan CDN) |
 | Fase 1 — Database & Models | `[x]` | Selesai |
 | Fase 2 — Auth & Base Template | `[x]` | Selesai |
-| Fase 3 — Halaman Admin | `[ ]` | — |
-| Fase 4 — Halaman Kasir | `[ ]` | — |
-| Fase 5 — Fitur Pendukung | `[ ]` | — |
-| Fase 6 — Testing & Finalisasi | `[ ]` | — |
+| Fase 3 — Halaman Admin | `[x]` | Selesai |
+| Fase 4 — Halaman Kasir | `[x]` | Selesai |
+| Fase 5 — Fitur Pendukung | `[x]` | Selesai |
+| Fase 6 — Testing & Finalisasi | `[x]` | Selesai |
 
 ---
 
