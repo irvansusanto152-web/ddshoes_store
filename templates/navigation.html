@@ -52,7 +52,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'brands_list' %}active{% endif %}" 
                        hx-get="{% url 'brands_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">style</i>
+                        <i class="material-icons">sell</i>
                         <span>Merek</span>
                     </a>
                 </li>
@@ -95,21 +95,21 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}" 
                        hx-get="{% url 'sales_report' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">bar_chart</i>
+                        <i class="material-icons">receipt_long</i>
                         <span>Laporan Penjualan</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'inventory_report' %}active{% endif %}" 
                        hx-get="{% url 'inventory_report' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">assessment</i>
+                        <i class="material-icons">warehouse</i>
                         <span>Laporan Inventory</span>
                     </a>
                 </li>
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_admin' %}active{% endif %}" 
                        hx-get="{% url 'closing_admin' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">receipt_long</i>
+                        <i class="material-icons">lock_clock</i>
                         <span>Data Closing</span>
                     </a>
                 </li>
@@ -149,7 +149,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_kasir' %}active{% endif %}" 
                        hx-get="{% url 'closing_kasir' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">lock_clock</i>
+                        <i class="material-icons">event_available</i>
                         <span>Closing Kasir</span>
                     </a>
                 </li>

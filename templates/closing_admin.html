@@ -31,9 +31,15 @@
 </div>
 
 <div class="glass-panel">
+    <div class="saas-toolbar mb-3 d-print-none">
+        <div class="st-search" style="position: relative; width: 100%; max-width: 400px;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-closing" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari nama kasir atau tanggal...">
+        </div>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle saas-table">
-            <thead class="table-light">
+        <table class="table table-hover align-middle saas-table" id="closing-table">
+            <thead>
                 <tr>
                     <th width="5%" class="text-center">No</th>
                     <th>Tanggal</th>
@@ -69,7 +75,7 @@
                 <tr>
                     <td colspan="8">
                         <div class="empty-state">
-                            <i class="material-icons">receipt_long</i>
+                            <i class="material-icons">event_busy</i>
                             <p>Belum ada data closing kasir.</p>
                         </div>
                     </td>
@@ -79,4 +85,20 @@
         </table>
     </div>
 </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function($) {
+        $("#search-closing").off("keyup").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#closing-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) { // exclude empty message
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
+        });
+    })(jQuery);
+</script>
 {% endblock %}

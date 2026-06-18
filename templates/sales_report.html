@@ -49,9 +49,15 @@
 </div>
 
 <div class="glass-panel">
+    <div class="saas-toolbar mb-3 d-print-none">
+        <div class="st-search" style="position: relative; width: 100%; max-width: 400px;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-sales" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari transaksi atau kasir...">
+        </div>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle saas-table">
-            <thead class="table-light">
+        <table class="table table-hover align-middle saas-table" id="sales-table">
+            <thead>
                 <tr>
                     <th width="5%" class="text-center">No</th>
                     <th>No. Transaksi</th>
@@ -127,6 +133,15 @@
         $('.btn-detail').off("click").on("click", function() {
             var trxId = $(this).data('id');
             window.uni_modal('Detail Transaksi #TRX-' + String(trxId).padStart(5, '0'), '/transactions/' + trxId + '/detail/', 'modal-lg');
+        });
+
+        $("#search-sales").off("keyup").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#sales-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) { // exclude empty message
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
         });
     })(jQuery);
 </script>

@@ -84,13 +84,13 @@
                     </td>
                     <td class="text-center">
                         <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ p.id }}" title="Toggle Status">
-                            <i class="material-icons">power_settings_new</i>
+                            <i class="material-icons">toggle_on</i>
                         </button>
                         <button class="btn-action btn-action-edit me-1 btn-edit-product" data-id="{{ p.id }}" title="Edit">
-                            <i class="material-icons">edit</i>
+                            <i class="material-icons">edit_note</i>
                         </button>
                         <button class="btn-action btn-action-delete btn-delete-product" data-id="{{ p.id }}" title="Hapus">
-                            <i class="material-icons">delete</i>
+                            <i class="material-icons">delete_outline</i>
                         </button>
                     </td>
                 </tr>
@@ -131,7 +131,7 @@
                     var textMatch = $(this).text().toLowerCase().indexOf(searchVal) > -1;
                     var statusMatch = true;
                     if(statusVal) {
-                        statusMatch = $(this).find('.status-badge').text().toLowerCase() === statusVal;
+                        statusMatch = $(this).find('td:eq(7)').text().trim().toLowerCase() === statusVal;
                     }
                     $(this).toggle(textMatch && statusMatch);
                 }

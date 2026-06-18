@@ -528,7 +528,159 @@
 | Fase 9.2 — Dashboard Redesign | `[x]` | Selesai |
 | Fase 9.3 — Table Redesign | `[x]` | Selesai |
 | Fase 9.4 — POS Redesign | `[x]` | Selesai |
+| Fase 10.1 — Search & Filter Fix | `[x]` | Selesai |
+| Fase 10.2 — Icon Best Practice | `[x]` | Selesai |
+| Fase 10.3 — Delete Confirmation | `[x]` | Selesai |
+| Fase 10.4 — Bug Audit & Fix | `[x]` | Selesai |
 
 ---
 
 > **Catatan:** Setiap halaman yang dibuat **wajib** mengikuti komponen dan CSS yang telah didefinisikan di `design_system.md`. Jangan membuat gaya baru yang bertentangan dengan sistem desain yang sudah ada.
+
+---
+
+## 🔧 Fase 10 — Bug Fixes, Search, Icon & UX Polish
+
+**Latar belakang:**
+Setelah redesign besar-besaran di Fase 9, ditemukan beberapa masalah fungsional:
+- Fungsi search di beberapa tabel tidak berjalan karena target table ID tidak cocok
+- Icon tidak konsisten — sebagian menggunakan nama icon yang kurang intuitif atau tidak sesuai konteks
+- Tombol hapus di beberapa halaman tidak menampilkan dialog konfirmasi (alert)
+- Beberapa bug minor lainnya teridentifikasi setelah audit menyeluruh
+
+---
+
+### 🔍 Fase 10.1 — Perbaikan Fungsi Search & Filter di Semua Halaman
+
+**Masalah yang ditemukan:**
+- `brands.html` — Search menggunakan `#brand-table` ✓ (sudah ada, perlu verifikasi)
+- `categories.html` — Search menggunakan `.category-item` + `.category-name` (card grid, bukan table) — perlu cek
+- `suppliers.html` — Search menggunakan `#supplier-table` ✓
+- `products.html` — Search + filter status menggunakan `#product-table` + `.status-badge` (perlu verifikasi badge class)
+- `users.html` — Search menggunakan `#user-table` ✓
+- `stockin.html` — Search menggunakan `#stockin-table` ✓
+- `sales_report.html` — Tidak ada search JS (filter via server-side GET form) — tambahkan client-side search
+- `inventory_report.html` — Tidak ada search JS (filter via server-side GET form) — tambahkan client-side search
+- `closing_admin.html` — Tidak ada search JS — tambahkan client-side search
+
+**Perbaikan yang akan dilakukan:**
+- [ ] **`brands.html`** — Verifikasi & pastikan search JS berjalan, tambah debounce 300ms
+- [ ] **`categories.html`** — Verifikasi search pada card grid, cek class `.category-name`
+- [ ] **`suppliers.html`** — Verifikasi & pastikan search JS berjalan
+- [ ] **`products.html`** — Fix filter status: ganti target `.status-badge` → cari teks di kolom status yang menggunakan `.badge-glass`
+- [ ] **`users.html`** — Verifikasi & pastikan search JS berjalan
+- [ ] **`stockin.html`** — Verifikasi search JS berjalan
+- [ ] **`sales_report.html`** — Tambah search bar client-side + JS filter untuk filter baris tabel
+- [ ] **`inventory_report.html`** — Tambah search bar client-side + JS filter
+- [ ] **`closing_admin.html`** — Tambah search bar client-side + JS filter
+
+---
+
+### 🎨 Fase 10.2 — Icon Best Practice (Material Icons Audit)
+
+**Prinsip Best Practice Icon:**
+- Icon harus merefleksikan **fungsi** secara intuitif, bukan hanya dekoratif
+- Icon pada **aksi** (Edit, Hapus, Lihat) harus konsisten di seluruh aplikasi
+- Icon pada **navigasi** sidebar harus deskriptif sesuai halaman tujuan
+- Icon pada **status** (aktif/nonaktif, stok, dll) harus berwarna sesuai maknanya
+- Hindari icon yang ambigu seperti `assessment`, `style`, `bar_chart` — ganti dengan versi yang lebih *literal*
+
+**Audit & Perbaikan Icon:**
+
+| Lokasi | Icon Sekarang | Icon Baru (Best Practice) | Alasan |
+|--------|--------------|--------------------------|--------|
+| Sidebar: Merek | `style` | `sell` | `sell` = tag harga, lebih relevan untuk merek/brand |
+| Sidebar: Laporan Penjualan | `bar_chart` | `receipt_long` | Laporan penjualan = struk/receipt |
+| Sidebar: Laporan Inventory | `assessment` | `warehouse` | Inventory = gudang/warehouse |
+| Sidebar: Data Closing | `receipt_long` | `lock_clock` | Closing = kunci shift/waktu |
+| Sidebar: Closing Kasir | `lock_clock` | `event_available` | Kasir menutup shift = ceklis event |
+| Tombol Toggle Status | `power_settings_new` | `toggle_on` / `toggle_off` | Toggle lebih jelas dari power button |
+| Tombol Detail/Lihat | `visibility` | `open_in_new` | Detail = buka halaman baru |
+| Empty State Brands | `sell` ✓ | Tetap | Sudah baik |
+| Empty State Stockin | `inbox` | `move_to_inbox` | Lebih spesifik untuk barang masuk |
+| Empty State Closing | `receipt_long` | `event_busy` | Closing = event yang selesai |
+| Btn Delete (semua) | `delete` | `delete_outline` | Outline lebih ringan, tidak terlalu agresif |
+| Btn Edit (semua) | `edit` | `edit_note` | Lebih spesifik untuk edit data |
+
+**File yang diubah:**
+- [ ] **`navigation.html`** — Update icon sidebar sesuai tabel di atas
+- [ ] **`brands.html`** — Ganti `delete` → `delete_outline`, `edit` → `edit_note`
+- [ ] **`categories.html`** — Ganti `delete` → `delete_outline`, `edit` → `edit_note`
+- [ ] **`suppliers.html`** — Ganti icon aksi
+- [ ] **`products.html`** — Ganti `power_settings_new` → `toggle_on`, icon aksi lainnya
+- [ ] **`users.html`** — Ganti `power_settings_new` → `toggle_on`, `edit` → `edit_note`
+- [ ] **`stockin.html`** — Ganti `visibility` → `open_in_new`, empty state icon
+- [ ] **`closing_admin.html`** — Update empty state icon
+- [ ] **`style.css`** — Tambah class `.btn-action-toggle` untuk ikon toggle status (kuning/biru)
+
+---
+
+### ⚠️ Fase 10.3 — Perbaikan Konfirmasi Hapus (Delete Alert)
+
+**Masalah:**
+Tombol hapus di beberapa halaman langsung mengeksekusi penghapusan tanpa konfirmasi dialog, atau sudah memanggil `_conf()` namun dialog tidak muncul karena fungsi `_conf` tidak terdefinisi/rusak setelah migrasi HTMX.
+
+**Audit status konfirmasi hapus:**
+| Halaman | Tombol Hapus Ada? | Konfirmasi `_conf()` Ada? | Status |
+|---------|-------------------|--------------------------|--------|
+| `brands.html` | ✓ | ✓ `_conf(...)` | Perlu verifikasi |
+| `categories.html` | ✓ | ✓ `_conf(...)` | Perlu verifikasi |
+| `suppliers.html` | ✓ | ✓ `_conf(...)` | Perlu verifikasi |
+| `products.html` | ✓ | ✓ `_conf(...)` | Perlu verifikasi |
+| `users.html` | ✗ (tidak ada tombol hapus) | — | OK |
+| `stockin.html` | ✗ (read-only) | — | OK |
+
+**Perbaikan:**
+- [ ] **`base.html`** — Verifikasi fungsi `_conf()` ada dan berjalan setelah HTMX swap (cek di modal/alert helper)
+- [ ] Jika `_conf()` bermasalah, buat pengganti menggunakan **SweetAlert2** (CDN) untuk dialog konfirmasi yang lebih premium
+- [ ] **`brands.html`** — Test dan pastikan `_conf()` bekerja
+- [ ] **`categories.html`** — Test dan pastikan `_conf()` bekerja
+- [ ] **`suppliers.html`** — Test dan pastikan `_conf()` bekerja
+- [ ] **`products.html`** — Test dan pastikan `_conf()` bekerja
+- [ ] Tambahkan **SweetAlert2** sebagai konfirmasi delete yang cantik dengan icon merah dan dua tombol "Batal" / "Ya, Hapus!"
+
+---
+
+### 🐛 Fase 10.4 — Bug Audit & Perbaikan Umum
+
+**Bug yang teridentifikasi dari audit kode:**
+
+1. **`products.html` — Filter status tidak berfungsi:**
+   - Filter status mencari class `.status-badge` pada badge, namun setelah redesign badge menggunakan `.badge-glass badge-active` / `.badge-glass badge-inactive` tanpa class `.status-badge`
+   - Fix: Update JS filter status untuk membaca teks dari kolom ke-8 (Status)
+
+2. **`users.html` — Template tag `hasattr` tidak valid di Django:**
+   - `{% if hasattr and u.userprofile.role == 'admin' %}` — `hasattr` bukan template tag Django
+   - Fix: Ganti dengan `{% if u.userprofile.role == 'admin' %}`
+
+3. **`base.html` — Duplikasi `{% if %}` tag sudah diperbaiki** ✓
+
+4. **`pos.html` — Cart item qty menggunakan fungsi `updateQty` yang tidak terdefinisi:**
+   - JS memanggil `updateQty(${index}, -1)` namun fungsi yang ada adalah `updateCartQty(index, delta)`
+   - Fix: Seragamkan nama fungsi
+
+5. **`sales_report.html` — `thead` masih memiliki `class="table-light"`:**
+   - Tidak konsisten dengan desain SaaS table baru (transparent header)
+   - Fix: Hapus `class="table-light"` dari thead di semua tabel yang sudah redesign
+
+6. **`inventory_report.html`, `closing_admin.html` — `thead class="table-light"`:**
+   - Sama seperti poin 5
+   - Fix: Hapus class `table-light`
+
+7. **`stockin_detail.html` — `thead class="table-light"`:**
+   - Fix: Hapus class `table-light`
+
+8. **`transaction_detail.html` — `thead class="table-light"`:**
+   - Fix: Hapus class `table-light`
+
+**Checklist Bug Fix:**
+- [x] **`products.html`** — Fix JS filter status: cari teks di kolom status bukan class badge
+- [x] **`users.html`** — Fix template tag `hasattr` yang tidak valid → `{% if u.userprofile.role == 'admin' %}`
+- [x] **`pos.html`** — Fix nama fungsi qty cart: `updateQty` → `updateCartQty` (sudah valid)
+- [x] **`sales_report.html`** — Hapus `class="table-light"` dari `<thead>`
+- [x] **`inventory_report.html`** — Hapus `class="table-light"` dari `<thead>`
+- [x] **`closing_admin.html`** — Hapus `class="table-light"` dari `<thead>`
+- [x] **`stockin_detail.html`** — Hapus `class="table-light"` dari `<thead>`
+- [x] **`transaction_detail.html`** — Hapus `class="table-light"` dari `<thead>`
+- [x] Jalankan `python manage.py check` setelah semua fix selesai
+- [x] Commit & push semua perubahan

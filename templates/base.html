@@ -24,6 +24,9 @@
     
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="sidebar-open">
     <!-- NProgress for HTMX Loading -->
@@ -167,9 +170,25 @@
         };
 
         window._conf = function(msg, funcName, params = []) {
-            $('#confirm_modal #confirm').attr('onclick', funcName + '(' + params.join(',') + ')');
-            $('#confirm_modal .modal-body').html(msg);
-            $('#confirm_modal').modal('show');
+            Swal.fire({
+                title: 'Konfirmasi Penghapusan',
+                text: msg,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Hapus!',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: {
+                    confirmButton: 'rounded-pill px-4',
+                    cancelButton: 'rounded-pill px-4'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window[funcName](...params);
+                }
+            });
         };
 
         // Custom alert: showAlert(msg, type) — type: 'info','success','danger'

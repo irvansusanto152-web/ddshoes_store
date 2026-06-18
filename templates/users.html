@@ -39,7 +39,7 @@
                     <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
                     <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ u.username }}</td>
                     <td>
-                        {% if hasattr and u.userprofile.role == 'admin' %}
+                        {% if u.userprofile.role == 'admin' %}
                             <span class="badge-glass badge-primary">Admin</span>
                         {% else %}
                             <span class="badge-glass badge-info">Kasir</span>
@@ -55,10 +55,10 @@
                     </td>
                     <td class="text-center">
                         <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ u.id }}" title="Toggle Akses">
-                            <i class="material-icons">power_settings_new</i>
+                            <i class="material-icons">toggle_on</i>
                         </button>
                         <button class="btn-action btn-action-edit btn-edit-user" data-id="{{ u.id }}" title="Edit">
-                            <i class="material-icons">edit</i>
+                            <i class="material-icons">edit_note</i>
                         </button>
                     </td>
                 </tr>
