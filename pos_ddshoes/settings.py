@@ -108,6 +108,18 @@ MESSAGE_TAGS = {
     messages.ERROR: 'danger',
 }
 
+# CSRF trusted origins — required when behind a reverse proxy (Coolify/Nginx)
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS',
+    default='https://ddshoespos.my.id',
+    cast=Csv()
+)
+
+# Reverse proxy support (Coolify/Traefik/Nginx)
+# Tells Django to trust X-Forwarded-Proto header from the proxy
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Security headers (aktif saat DEBUG=False)
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
