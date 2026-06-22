@@ -59,7 +59,11 @@ def generate_product_code(brand_name, size):
 
 def login_view(request):
     if request.user.is_authenticated:
-        if request.user.userprofile.role == 'kasir':
+        try:
+            role = request.user.userprofile.role
+        except Exception:
+            role = 'admin'
+        if role == 'kasir':
             return redirect('pos_page')
         return redirect('dashboard')
         
@@ -69,7 +73,14 @@ def login_view(request):
         user = authenticate(request, username=u, password=p)
         if user is not None:
             login(request, user)
-            if user.userprofile.role == 'kasir':
+            try:
+                role = user.userprofile.role
+            except Exception:
+                # UserProfile belum ada — buat otomatis sebagai admin
+                from core.models import UserProfile
+                UserProfile.objects.get_or_create(user=user, defaults={'role': 'admin'})
+                role = 'admin'
+            if role == 'kasir':
                 return redirect('pos_page')
             return redirect('dashboard')
         else:
