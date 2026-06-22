@@ -2,18 +2,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from django.http import JsonResponse
-from django.db import connection
+from django.http import HttpResponse
+from django.views.decorators.http import require_GET
 
 
+@require_GET
 def health_check(request):
-    """Endpoint health check untuk Docker dan load balancer."""
-    try:
-        # Cek koneksi database
-        connection.ensure_connection()
-        return JsonResponse({'status': 'ok', 'database': 'ok'}, status=200)
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'detail': str(e)}, status=503)
+    """Endpoint health check untuk Docker/Coolify.
+    Return plain 200 OK — tidak cek DB agar tidak gagal saat db.sqlite3 belum ada.
+    """
+    return HttpResponse("ok", content_type="text/plain", status=200)
 
 
 urlpatterns = [

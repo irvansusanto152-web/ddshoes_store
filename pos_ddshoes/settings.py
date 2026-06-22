@@ -13,6 +13,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-y6601u*dipj*)4t($pnukpesp4_0rf)i1*+c*yjk6xua17tgl4')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+# Selalu izinkan localhost untuk healthcheck internal Docker/Coolify
+ALLOWED_HOSTS += ['localhost', '127.0.0.1']
 
 
 # Application definition
