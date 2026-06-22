@@ -15,7 +15,6 @@ services:
       - .env
     volumes:
       - media_volume:/app/media
-      - static_volume:/app/staticfiles
       - sqlite_volume:/app/db.sqlite3
     ports:
       - "8000:8000"
@@ -28,5 +27,4 @@ services:
 
 volumes:
   media_volume:
-  static_volume:
   sqlite_volume:
