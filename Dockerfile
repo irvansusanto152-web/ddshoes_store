@@ -24,17 +24,20 @@ RUN pip install --upgrade pip \
 # Copy project
 COPY . .
 
-# Create directories for static and media files
-RUN mkdir -p /app/staticfiles /app/media
-
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
 # Create non-root user for security
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-RUN chown -R appuser:appgroup /app
+
+# Create directories and set ownership BEFORE collectstatic
+RUN mkdir -p /app/staticfiles /app/media /app/data \
+    && chown -R appuser:appgroup /app
+
+# Switch to non-root user for collectstatic (no permission issues)
 USER appuser
+
+# Collect static files baked into image
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
-CMD ["gunicorn", "pos_ddshoes.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-"]
+# Auto-migrate then start gunicorn — data aman karena db di volume
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn pos_ddshoes.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"]

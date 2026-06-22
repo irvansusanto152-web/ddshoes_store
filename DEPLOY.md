@@ -1,144 +1,114 @@
 # Panduan Deploy ke VPS dengan Coolify
 
-Coolify adalah self-hosted PaaS yang mengelola Nginx, SSL (Let's Encrypt), dan domain secara otomatis. Kamu hanya perlu push kode dan konfigurasi environment variables.
+Coolify adalah self-hosted PaaS yang mengelola Nginx, SSL (Let's Encrypt), dan domain secara otomatis.
 
 ---
 
-## Prasyarat
+## Arsitektur Penyimpanan Data
 
-- VPS dengan Ubuntu 20.04 / 22.04, minimal RAM 2GB
-- Coolify sudah terinstall di VPS ([panduan install Coolify](https://coolify.io/docs/installation))
-- Repository sudah di-push ke GitHub / GitLab / Gitea
+| Path di container | Volume        | Keterangan                                      |
+|-------------------|---------------|-------------------------------------------------|
+| `/app/data/`      | `db_volume`   | Database SQLite — persistent, tidak boleh hilang |
+| `/app/media/`     | `media_volume`| Foto produk upload — persistent                  |
+| `/app/staticfiles/` | *(tidak di-mount)* | Di-bake ke image saat build, tidak perlu volume |
 
----
-
-## Langkah Deploy
-
-### 1. Install Coolify di VPS
-
-Jalankan di terminal VPS:
-
-```bash
-curl -fsSL https://cdn.coollabs.io/coolify/install.sh | bash
-```
-
-Setelah selesai, akses Coolify via `http://IP_VPS:8000` dan buat akun admin.
+**Prinsip:** Data penting (DB + media) disimpan di Docker volume yang terpisah dari image.
+Saat kamu push kode baru dan Coolify rebuild image, volume tidak tersentuh → data aman.
 
 ---
 
-### 2. Tambah Repository di Coolify
+## Deploy Pertama Kali
 
-1. Buka Coolify dashboard
-2. Klik **Projects** → **New Project** → beri nama (misal: `pos-ddshoes`)
-3. Klik **New Resource** → pilih **Application**
-4. Pilih source: **GitHub / GitLab / Gitea** → connect repo `pos_ddshoes2`
-5. Branch: `master`
-6. Build Pack: pilih **Dockerfile** (Coolify akan otomatis detect `Dockerfile` di root)
-
----
-
-### 3. Konfigurasi di Coolify Dashboard
-
-Di halaman konfigurasi aplikasi:
+### 1. Setup di Coolify Dashboard
 
 **General:**
 - Port: `8000`
 - Health Check Path: `/health/`
+- Build Pack: `Dockerfile`
 
-**Environment Variables** — tambahkan satu per satu:
+**Environment Variables:**
 
 | Key | Value |
 |-----|-------|
-| `SECRET_KEY` | *(generate di bawah)* |
+| `SECRET_KEY` | *(generate: `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`)* |
 | `DEBUG` | `False` |
-| `ALLOWED_HOSTS` | `your-domain.com,www.your-domain.com` |
+| `ALLOWED_HOSTS` | `ddshoespos.my.id` |
+| `CSRF_TRUSTED_ORIGINS` | `https://ddshoespos.my.id` |
 | `TIME_ZONE` | `Asia/Jakarta` |
 
-> Generate SECRET_KEY di terminal VPS:
-> ```bash
-> python3 -c "import secrets; print(secrets.token_urlsafe(50))"
-> ```
+**Storages (di Coolify: Applications → Storages):**
 
-**Domain:**
-- Masukkan domain kamu, contoh: `pos.your-domain.com`
-- Coolify otomatis setup SSL via Let's Encrypt
+| Source Path | Keterangan |
+|-------------|------------|
+| `/app/data` | Database SQLite |
+| `/app/media` | Foto produk |
 
----
+> ⚠️ Pastikan `/app/staticfiles` TIDAK ada di Storages — static files sudah di-bake ke image.
 
-### 4. Deploy Pertama Kali
+### 2. Deploy
 
-Setelah konfigurasi selesai, klik tombol **Deploy** di Coolify dashboard.
+Klik **Deploy** di Coolify. Proses otomatis:
+1. Build image (termasuk `collectstatic`)
+2. Jalankan container
+3. `migrate` otomatis jalan saat container start (sudah di CMD)
+4. Gunicorn mulai melayani request
 
-Coolify akan otomatis:
-1. Clone repository
-2. Build Docker image dari `Dockerfile`
-3. Jalankan container
-4. Setup SSL dan routing domain
-
-Setelah build selesai, jalankan migrasi dan buat superuser lewat Coolify terminal:
+### 3. Buat Superuser (sekali saja)
 
 ```bash
-# Buka terminal di Coolify: Applications → pos-ddshoes → Terminal
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py collectstatic --noinput
+sudo docker exec -it <nama_container> python manage.py createsuperuser
+```
+
+Buat juga UserProfile untuk superuser:
+
+```bash
+sudo docker exec -it <nama_container> python manage.py shell -c "
+from django.contrib.auth.models import User
+from core.models import UserProfile
+for u in User.objects.all():
+    obj, created = UserProfile.objects.get_or_create(user=u, defaults={'role': 'admin'})
+    print(u.username, obj.role, created)
+"
 ```
 
 ---
 
-### 5. Deploy Update Selanjutnya
-
-Cukup push ke branch `master`:
+## Update Kode (Rutin)
 
 ```bash
+git add .
+git commit -m "deskripsi perubahan"
 git push origin master
 ```
 
-Coolify bisa dikonfigurasi untuk **auto-deploy** saat ada push baru (webhook otomatis), atau klik manual **Redeploy** di dashboard.
-
----
-
-### 6. Persistent Storage (Penting!)
-
-Pastikan Coolify memetakan volume untuk data yang tidak boleh hilang saat redeploy.
-
-Di Coolify: **Applications → pos-ddshoes → Storages**, tambahkan:
-
-| Source Path (di container) | Keterangan |
-|----------------------------|------------|
-| `/app/media` | Upload foto produk |
-| `/app/db.sqlite3` | Database SQLite |
-| `/app/staticfiles` | Static files hasil collectstatic |
+Coolify otomatis rebuild image dan redeploy. Yang terjadi:
+- ✅ Image baru di-build dengan kode terbaru
+- ✅ `collectstatic` jalan ulang → static files terbaru di-bake ke image
+- ✅ `migrate` otomatis jalan saat container start baru
+- ✅ Volume `db_volume` dan `media_volume` tidak tersentuh → **data aman**
+- ✅ Zero downtime (Coolify stop container lama setelah container baru healthy)
 
 ---
 
 ## Backup Database
 
-Dari terminal VPS:
-
 ```bash
-# Masuk ke container
-docker exec -it pos_ddshoes_web bash
-
-# Backup
-cp /app/db.sqlite3 /app/db_backup_$(date +%Y%m%d).sqlite3
-exit
-
-# Copy ke host
-docker cp pos_ddshoes_web:/app/db_backup_$(date +%Y%m%d).sqlite3 ~/
+# Copy database dari volume ke host
+sudo docker cp $(sudo docker ps -qf "name=go2ij") :/app/data/db.sqlite3 ~/db_backup_$(date +%Y%m%d).sqlite3
 ```
 
 ---
 
-## Struktur File Docker
+## Troubleshooting
 
-```
-pos_ddshoes2/
-├── Dockerfile          ← Image Python + Gunicorn (dipakai Coolify)
-├── docker-compose.yml  ← Referensi lokal (Coolify pakai Dockerfile langsung)
-├── .env.example        ← Template env (isi nilainya di Coolify dashboard)
-├── .dockerignore       ← File yang dikecualikan dari image
-└── nginx/              ← Tidak dipakai di Coolify (Coolify handle Nginx sendiri)
-```
+**Static files hancur / CSS tidak muncul:**
+Static files sudah di-bake ke image. Pastikan `/app/staticfiles` TIDAK di-mount sebagai volume di Coolify Storages.
 
-> **Catatan:** File `nginx/` dan service `nginx` di `docker-compose.yml` tidak digunakan saat deploy via Coolify. Coolify sudah menyediakan reverse proxy dan SSL secara built-in.
+**Database hilang setelah redeploy:**
+Pastikan volume `/app/data` terdaftar di Coolify Storages dan path-nya tepat.
+
+**500 error setelah login:**
+Jalankan shell command buat UserProfile di atas.
+
+**CSRF error:**
+Pastikan env var `CSRF_TRUSTED_ORIGINS=https://ddshoespos.my.id` ada di Coolify dashboard.

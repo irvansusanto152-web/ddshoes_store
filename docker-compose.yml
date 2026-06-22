@@ -14,8 +14,9 @@ services:
     env_file:
       - .env
     volumes:
-      - media_volume:/app/media
-      - sqlite_volume:/app/db.sqlite3
+      - media_volume:/app/media      # Foto produk — JANGAN dihapus
+      - db_volume:/app/data          # Database SQLite — JANGAN dihapus
+      # staticfiles TIDAK di-mount — sudah baked ke image saat build (collectstatic di Dockerfile)
     ports:
       - "8000:8000"
     healthcheck:
@@ -26,5 +27,5 @@ services:
       start_period: 40s
 
 volumes:
-  media_volume:
-  sqlite_volume:
+  media_volume:   # Persistent: foto produk upload
+  db_volume:      # Persistent: database SQLite

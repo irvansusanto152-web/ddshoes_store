@@ -60,11 +60,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'pos_ddshoes.wsgi.application'
 
 
-# Database — SQLite (cukup untuk POS single-user)
+# Database — SQLite disimpan di /app/data/ agar persistent via volume
+# Volume db_volume di-mount ke /app/data sehingga data tidak hilang saat redeploy
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'data' / 'db.sqlite3',
     }
 }
 
