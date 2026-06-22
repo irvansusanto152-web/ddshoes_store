@@ -1,5 +1,3 @@
-version: '3.9'
-
 # Catatan untuk Coolify:
 # - Coolify handle Nginx, SSL, dan domain secara otomatis
 # - Service nginx TIDAK digunakan di sini

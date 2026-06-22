@@ -40,4 +40,4 @@ RUN python manage.py collectstatic --noinput
 EXPOSE 8000
 
 # Auto-migrate then start gunicorn — data aman karena db di volume
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn pos_ddshoes.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_data && gunicorn pos_ddshoes.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --access-logfile - --error-logfile -"]

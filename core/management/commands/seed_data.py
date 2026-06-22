@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from core.models import UserProfile, Brands, Categories, Suppliers
+from core.models import UserProfile, Brands, Categories, Suppliers, Products, StockIns, StockInDetails
+from datetime import date
 
 
 class Command(BaseCommand):
@@ -63,6 +64,90 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('  Kasir demo created (kasir01 / kasir123)'))
         else:
             self.stdout.write(self.style.WARNING('  kasir01 already exists, skipping.'))
+
+        # --- PRODUCTS ---
+        products_data = [
+            {
+                'product_code': 'NK-AF1-01',
+                'name': 'Nike Air Force 1 White',
+                'brand_name': 'Nike',
+                'category_name': 'Sneakers',
+                'size': '42',
+                'condition': 'Baru',
+                'buy_price': 1000000,
+                'sell_price': 1500000,
+                'stock': 0,
+            },
+            {
+                'product_code': 'AD-UB-01',
+                'name': 'Adidas Ultraboost 21',
+                'brand_name': 'Adidas',
+                'category_name': 'Running',
+                'size': '43',
+                'condition': 'Baru',
+                'buy_price': 1200000,
+                'sell_price': 1800000,
+                'stock': 0,
+            },
+            {
+                'product_code': 'VN-OS-01',
+                'name': 'Vans Old Skool Black White',
+                'brand_name': 'Vans',
+                'category_name': 'Casual',
+                'size': '40',
+                'condition': 'Baru',
+                'buy_price': 500000,
+                'sell_price': 750000,
+                'stock': 0,
+            }
+        ]
+
+        for p_data in products_data:
+            brand = Brands.objects.get(name=p_data['brand_name'])
+            category = Categories.objects.get(name=p_data['category_name'])
+            obj, created = Products.objects.get_or_create(
+                product_code=p_data['product_code'],
+                defaults={
+                    'name': p_data['name'],
+                    'brand': brand,
+                    'category': category,
+                    'size': p_data['size'],
+                    'condition': p_data['condition'],
+                    'buy_price': p_data['buy_price'],
+                    'sell_price': p_data['sell_price'],
+                    'stock': p_data['stock'],
+                }
+            )
+            if created:
+                self.stdout.write(self.style.SUCCESS(f'  Product created: {obj.name}'))
+
+        # --- STOCK INS (BARANG MASUK) ---
+        admin_user_obj = User.objects.get(username='admin')
+        supplier_obj = Suppliers.objects.get(name='Supplier Utama')
+
+        if not StockIns.objects.filter(notes='Initial Seed Stock').exists():
+            stock_in = StockIns.objects.create(
+                supplier=supplier_obj,
+                received_by=admin_user_obj,
+                received_date=date.today(),
+                notes='Initial Seed Stock'
+            )
+            
+            for p_data in products_data:
+                prod = Products.objects.get(product_code=p_data['product_code'])
+                qty = 10
+                StockInDetails.objects.create(
+                    stock_in=stock_in,
+                    product=prod,
+                    quantity=qty,
+                    buy_price=prod.buy_price
+                )
+                prod.stock += qty
+                prod.save()
+            
+            self.stdout.write(self.style.SUCCESS('  Stock In created with initial quantities (10 each).'))
+        else:
+            self.stdout.write(self.style.WARNING('  Stock In already exists, skipping.'))
 
         self.stdout.write(self.style.SUCCESS('\n✅ Seed data completed successfully!'))
         self.stdout.write('  Default accounts:')
