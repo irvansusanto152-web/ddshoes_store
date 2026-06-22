@@ -77,9 +77,9 @@ body {
 aside.mdc-drawer {
     background: #06091a;
     width: 240px;
-    min-height: 100vh;
+    height: 100vh;
     position: fixed;
-    top: 0; left: 0;
+    top: 0; left: 0; bottom: 0;
     overflow: hidden;
     border-right: 1px solid rgba(100, 200, 255, 0.07);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -103,7 +103,7 @@ body.sidebar-closed .mdc-drawer-app-content { margin-left: 0 !important; }
 @keyframes scanMove2 { 0%,100%{ left:68%; opacity:.2 } 50%{ left:78%; opacity:.6 } }
 
 /* INNER */
-.sb-inner { position:relative; z-index:2; display:flex; flex-direction:column; height:100%; overflow-y:auto; overflow-x:hidden; }
+.sb-inner { position:relative; z-index:2; display:flex; flex-direction:column; flex:1; height:100%; overflow-y:auto; overflow-x:hidden; padding-bottom: 20px; }
 /* Scrollbar custom untuk sidebar */
 .sb-inner::-webkit-scrollbar { width: 4px; }
 .sb-inner::-webkit-scrollbar-track { background: transparent; }
@@ -175,7 +175,7 @@ body.sidebar-closed .mdc-drawer-app-content { margin-left: 0 !important; }
 }
 
 /* NAV AREA */
-.sb-nav { padding:8px 10px; flex:1; }
+.sb-nav { padding:8px 10px 24px 10px; flex:1; }
 .mdc-list { list-style:none; padding:0; margin:0; }
 .mdc-drawer-item { margin-bottom:2px; }
 

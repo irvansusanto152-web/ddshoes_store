@@ -28,7 +28,7 @@
                     {% if request.user.is_superuser %}
                     <li><a class="dropdown-item" href="/admin/"><i class="material-icons align-middle me-2">settings</i> Django Admin</a></li>
                     {% endif %}
-                    <li><a class="dropdown-item text-danger" href="{% url 'logout' %}"><i class="material-icons align-middle me-2">logout</i> Logout</a></li>
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout(); return false;"><i class="material-icons align-middle me-2">logout</i> Logout</a></li>
                 </ul>
             </div>
         </div>

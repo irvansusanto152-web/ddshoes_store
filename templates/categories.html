@@ -45,7 +45,7 @@
                         </div>
                     </div>
                     <div class="mt-auto">
-                        <span class="badge-glass badge-primary">{{ c.product_count }} produk</span>
+                        <span class="badge-glass badge-primary" title="{{ c.active_count }} siap dijual, dari total {{ c.product_count }} terdaftar">{{ c.active_count }} tersedia / {{ c.product_count }} total</span>
                     </div>
                 </div>
             </div>
@@ -98,6 +98,7 @@
                 success: function(resp) {
                     if(resp.status == 'success') {
                         htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Data berhasil dihapus.', 'success'); }, 400);
                     } else {
                         showAlert("Gagal menghapus data.");
                         end_loader();

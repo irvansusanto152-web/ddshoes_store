@@ -1,27 +1,39 @@
 {% extends 'base.html' %}
 {% block title %}Catat Barang Masuk{% endblock %}
 {% block pageContent %}
+
 <div class="saas-header mb-4">
     <div class="sh-title">
-        <a href="{% url 'stockin_list' %}" class="text-muted text-decoration-none mb-2 d-inline-block"><i class="material-icons align-middle" style="font-size:16px;">arrow_back</i> Kembali</a>
+        <a href="{% url 'stockin_list' %}" class="text-muted text-decoration-none mb-2 d-inline-block">
+            <i class="material-icons align-middle" style="font-size:16px;">arrow_back</i> Kembali ke Riwayat
+        </a>
         <h2>Catat Barang Masuk</h2>
-        <p>Input data penerimaan barang dari pemasok.</p>
+        <p>Isi data produk yang diterima dari pemasok. Produk baru akan otomatis ditambahkan ke katalog.</p>
     </div>
 </div>
 
-<form method="POST" action="">
+<form method="POST" action="" id="stockin-form">
     {% csrf_token %}
     <div class="row">
-        <div class="col-md-4 mb-4">
+
+        {# ===== PANEL KIRI: INFO PENERIMAAN ===== #}
+        <div class="col-md-3 mb-4">
             <div class="glass-panel h-100">
-                <h5 class="fw-bold mb-3 border-bottom pb-2">Informasi Penerimaan</h5>
+                <h5 class="fw-bold mb-3 border-bottom pb-2">
+                    <i class="material-icons align-middle me-1" style="font-size:20px;color:#6366f1;">local_shipping</i>
+                    Info Penerimaan
+                </h5>
                 <div class="form-group mb-3">
-                    <label class="control-label fw-bold text-secondary mb-1">Tanggal Terima <span class="text-danger">*</span></label>
+                    <label class="form-label fw-bold text-secondary mb-1">
+                        Tanggal Terima <span class="text-danger">*</span>
+                    </label>
                     <input type="date" name="received_date" class="form-control saas-input" required value="{% now 'Y-m-d' %}">
                 </div>
                 <div class="form-group mb-3">
-                    <label class="control-label fw-bold text-secondary mb-1">Pemasok <span class="text-danger">*</span></label>
-                    <select name="supplier_id" class="form-select select2" required>
+                    <label class="form-label fw-bold text-secondary mb-1">
+                        Pemasok <span class="text-danger">*</span>
+                    </label>
+                    <select name="supplier_id" class="form-select saas-input select2" required>
                         <option value="" disabled selected>Pilih Pemasok</option>
                         {% for s in suppliers %}
                         <option value="{{ s.id }}">{{ s.name }}</option>
@@ -29,133 +41,122 @@
                     </select>
                 </div>
                 <div class="form-group mb-3">
-                    <label class="control-label fw-bold text-secondary mb-1">Catatan</label>
+                    <label class="form-label fw-bold text-secondary mb-1">Catatan</label>
                     <textarea name="notes" rows="4" class="form-control saas-input" placeholder="Keterangan tambahan..."></textarea>
+                </div>
+                <div class="mt-4">
+                    <div class="p-3 rounded-3" style="background:rgba(99,102,241,0.07);border:1px dashed #6366f1;">
+                        <p class="mb-1 fw-bold text-primary" style="font-size:0.8rem;">
+                            <i class="material-icons align-middle" style="font-size:14px;">info</i>
+                            Produk Baru Otomatis
+                        </p>
+                        <p class="text-muted mb-0" style="font-size:0.75rem;">
+                            Produk yang belum ada di katalog akan ditambahkan otomatis saat Anda menyimpan.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8 mb-4">
+        {# ===== PANEL KANAN: DATA PRODUK ===== #}
+        <div class="col-md-9 mb-4">
             <div class="glass-panel h-100 d-flex flex-column">
-                <h5 class="fw-bold mb-3 border-bottom pb-2">Detail Produk</h5>
+                <h5 class="fw-bold mb-3 border-bottom pb-2">
+                    <i class="material-icons align-middle me-1" style="font-size:20px;color:#6366f1;">inventory_2</i>
+                    Daftar Produk Diterima
+                </h5>
+
                 <div class="table-responsive flex-grow-1">
-                    <table class="table table-bordered saas-table" id="item-table">
-                        <thead class="table-light">
-                            <tr>
-                                <th width="45%">Produk</th>
-                                <th width="20%">Harga Beli Baru</th>
-                                <th width="20%">Qty</th>
-                                <th width="15%" class="text-center">Aksi</th>
+                    <table class="table saas-table align-middle" id="item-table">
+                        <thead class="text-nowrap">
+                            <tr style="background:rgba(99,102,241,0.06);">
+                                <th style="min-width:180px;">Nama Produk <span class="text-danger">*</span></th>
+                                <th style="min-width:120px;">Merek <span class="text-danger">*</span></th>
+                                <th style="min-width:120px;">Kategori <span class="text-danger">*</span></th>
+                                <th style="min-width:80px;">Ukuran <span class="text-danger">*</span></th>
+                                <th style="min-width:110px;">Kondisi <span class="text-danger">*</span></th>
+                                <th style="min-width:120px;">Harga Beli <span class="text-danger">*</span></th>
+                                <th style="min-width:120px;">Harga Jual <span class="text-danger">*</span></th>
+                                <th style="min-width:100px;" class="text-center">Qty <span class="text-danger">*</span></th>
+                                <th style="min-width:50px;" class="text-center">Hapus</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Baris pertama -->
-                            <tr>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        <div class="flex-grow-1">
-                                            <select name="product_id[]" class="form-select select2-item" required style="width: 100%;">
-                                                <option value="" disabled selected>Pilih Produk...</option>
-                                                {% for p in products %}
-                                                <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
-                                                {% endfor %}
-                                            </select>
-                                        </div>
-                                        <button type="button" class="btn btn-outline-success btn-sm px-2" onclick="openInlineProductForm(this)" title="Produk Baru" style="height: 38px;">
-                                            <i class="material-icons" style="font-size: 18px; line-height: 1;">add</i>
-                                        </button>
-                                    </div>
-                                </td>
-                                <td>
-                                    <input type="number" name="buy_price[]" class="form-control" placeholder="Harga Beli (opsional)">
-                                </td>
-                                <td>
-                                    <input type="number" name="quantity[]" class="form-control text-center" min="1" value="1" required>
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-danger btn-remove-row" tabindex="-1"><i class="material-icons" style="font-size:16px;">delete</i></button>
-                                </td>
-                            </tr>
+                        <tbody id="item-tbody">
+                            {% include 'stockin_row.html' with brands=brands categories=categories conditions=conditions %}
                         </tbody>
                     </table>
                 </div>
-                <div class="mt-3 d-flex justify-content-between align-items-center">
+
+                <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <button type="button" class="btn btn-outline-primary" id="btn-add-row">
-                        <i class="material-icons align-middle me-1">add_circle</i> Tambah Baris
+                        <i class="material-icons align-middle me-1">add_circle</i> Tambah Produk Lain
                     </button>
-                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold" style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); border: none; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);">
-                        <i class="material-icons align-middle me-1">save</i> Simpan Data
+                    <button type="submit" class="btn btn-primary px-5 py-2 fw-bold" style="background:linear-gradient(135deg,#6366f1 0%,#a855f7 100%);border:none;box-shadow:0 4px 15px rgba(99,102,241,0.4);">
+                        <i class="material-icons align-middle me-1">save</i> Simpan Barang Masuk
                     </button>
                 </div>
             </div>
         </div>
+
     </div>
 </form>
 
-<table id="clone-row" style="display:none;">
-    <tr>
-        <td>
-            <div class="d-flex gap-1">
-                <div class="flex-grow-1">
-                    <select name="product_id[]" class="form-select clone-select2" required style="width: 100%;">
-                        <option value="" disabled selected>Pilih Produk...</option>
-                        {% for p in products %}
-                        <option value="{{ p.id }}">{{ p.name }} ({{ p.size }} - {{ p.condition }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button type="button" class="btn btn-outline-success btn-sm px-2" onclick="openInlineProductForm(this)" title="Produk Baru" style="height: 38px;">
-                    <i class="material-icons" style="font-size: 18px; line-height: 1;">add</i>
-                </button>
-            </div>
-        </td>
-        <td>
-            <input type="number" name="buy_price[]" class="form-control" placeholder="Harga Beli (opsional)">
-        </td>
-        <td>
-            <input type="number" name="quantity[]" class="form-control text-center" min="1" value="1" required>
-        </td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger btn-remove-row" tabindex="-1"><i class="material-icons" style="font-size:16px;">delete</i></button>
-        </td>
-    </tr>
+{# Template baris kosong untuk clone #}
+<table style="display:none;">
+    <tbody id="clone-row-template">
+        {% include 'stockin_row.html' with brands=brands categories=categories conditions=conditions %}
+    </tbody>
 </table>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        $('.select2').select2({ theme: 'bootstrap-5' });
-        $('.select2-item').select2({ theme: 'bootstrap-5' });
+        // Init Select2 pada baris pertama
+        initRowSelect2($('#item-tbody tr:first'));
 
-        $('#btn-add-row').click(function() {
-            var tr = $('#clone-row tr').clone();
-            $('#item-table tbody').append(tr);
-            tr.find('.clone-select2').removeClass('clone-select2').addClass('select2-item').select2({ theme: 'bootstrap-5' });
+        // Tombol tambah baris
+        $('#btn-add-row').on('click', function() {
+            var newRow = $('#clone-row-template tr').first().clone();
+            // Reset semua nilai
+            newRow.find('input').val('');
+            newRow.find('input[name="quantity[]"]').val('1');
+            newRow.find('select').val('');
+            $('#item-tbody').append(newRow);
+            initRowSelect2(newRow);
         });
 
-        $('#item-table').on('click', '.btn-remove-row', function() {
-            if($('#item-table tbody tr').length > 1) {
+        // Hapus baris
+        $('#item-tbody').on('click', '.btn-remove-row', function() {
+            if ($('#item-tbody tr').length > 1) {
                 $(this).closest('tr').remove();
             } else {
-                showAlert('Minimal harus ada 1 baris produk.');
+                showAlert('Minimal harus ada 1 baris produk.', 'warning');
+            }
+        });
+
+        // Validasi sebelum submit
+        $('#stockin-form').on('submit', function(e) {
+            var valid = true;
+            $('#item-tbody tr').each(function() {
+                var nama = $(this).find('input[name="product_name[]"]').val().trim();
+                var qty  = parseInt($(this).find('input[name="quantity[]"]').val()) || 0;
+                if (!nama || qty < 1) {
+                    valid = false;
+                    return false;
+                }
+            });
+            if (!valid) {
+                e.preventDefault();
+                showAlert('Pastikan semua baris produk sudah diisi dengan lengkap.', 'warning');
             }
         });
     });
 
-    let currentSelectElement = null;
-
-    function openInlineProductForm(btnElement) {
-        currentSelectElement = $(btnElement).closest('td').find('select');
-        window.uni_modal('Tambah Produk Baru', '{% url "products_save" %}?inline=1', 'modal-lg');
+    function initRowSelect2(row) {
+        row.find('.select2-brand').select2({ theme: 'bootstrap-5', width: '100%', placeholder: 'Merek' });
+        row.find('.select2-category').select2({ theme: 'bootstrap-5', width: '100%', placeholder: 'Kategori' });
     }
-
-    window.onInlineProductCreated = function(productId, productName) {
-        if (currentSelectElement) {
-            var newOption = new Option(productName, productId, false, true);
-            currentSelectElement.append(newOption).trigger('change');
-            currentSelectElement = null;
-        }
-    };
 </script>
 {% endblock %}

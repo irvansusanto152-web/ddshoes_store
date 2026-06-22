@@ -52,7 +52,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'brands_list' %}active{% endif %}" 
                        hx-get="{% url 'brands_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">sell</i>
+                        <i class="material-icons">label</i>
                         <span>Merek</span>
                     </a>
                 </li>
@@ -88,6 +88,13 @@
                         <span>Barang Masuk</span>
                     </a>
                 </li>
+                <li class="mdc-drawer-item">
+                    <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'adjustment_list' or request.resolver_match.url_name == 'adjustment_save' %}active{% endif %}" 
+                       hx-get="{% url 'adjustment_list' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
+                        <i class="material-icons">tune</i>
+                        <span>Penyesuaian</span>
+                    </a>
+                </li>
 
                 <div class="sb-glow-divider mt-2"></div>
                 <div class="sb-section-label">LAPORAN</div>
@@ -95,7 +102,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'sales_report' %}active{% endif %}" 
                        hx-get="{% url 'sales_report' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">receipt_long</i>
+                        <i class="material-icons">analytics</i>
                         <span>Laporan Penjualan</span>
                     </a>
                 </li>
@@ -109,7 +116,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_admin' %}active{% endif %}" 
                        hx-get="{% url 'closing_admin' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">lock_clock</i>
+                        <i class="material-icons">payments</i>
                         <span>Data Closing</span>
                     </a>
                 </li>
@@ -149,7 +156,7 @@
                 <li class="mdc-drawer-item">
                     <a class="mdc-drawer-link {% if request.resolver_match.url_name == 'closing_kasir' %}active{% endif %}" 
                        hx-get="{% url 'closing_kasir' %}" hx-target="#main-content" hx-push-url="true" href="javascript:void(0);">
-                        <i class="material-icons">event_available</i>
+                        <i class="material-icons">lock_clock</i>
                         <span>Closing Kasir</span>
                     </a>
                 </li>
@@ -158,7 +165,7 @@
                 <div class="sb-glow-divider mt-2"></div>
                 <!-- Logout -->
                 <li class="mdc-drawer-item">
-                    <a class="mdc-drawer-link text-danger" href="{% url 'logout' %}">
+                    <a class="mdc-drawer-link text-danger" href="#" id="btn-logout-sidebar" onclick="confirmLogout(); return false;">
                         <i class="material-icons">logout</i>
                         <span>Logout</span>
                     </a>
@@ -173,3 +180,83 @@
 
 <!-- Backdrop untuk mobile -->
 <div id="sb-backdrop" onclick="toggleSidebar()"></div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:20px; padding:36px 32px; max-width:380px; width:90%; text-align:center; box-shadow:0 25px 60px rgba(0,0,0,0.25); animation: modalPop 0.25s ease;">
+        <div style="width:72px; height:72px; border-radius:50%; background:linear-gradient(135deg,#ef4444,#dc2626); display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i class="material-icons" style="color:#fff; font-size:36px;">logout</i>
+        </div>
+        <h4 style="font-weight:800; color:#1e293b; margin-bottom:10px; font-size:1.2rem;">Konfirmasi Logout</h4>
+        <p style="color:#64748b; font-size:0.9rem; line-height:1.6; margin-bottom:28px;">Apakah Anda yakin ingin keluar dari sistem? Semua sesi aktif akan diakhiri.</p>
+        <div class="d-flex gap-3 justify-content-center">
+            <button onclick="document.getElementById('logout-modal').style.display='none'" style="flex:1; padding:12px 20px; border:2px solid #e2e8f0; background:#f8fafc; color:#475569; border-radius:12px; font-weight:600; font-size:0.9rem; cursor:pointer; transition:all 0.2s;">
+                <i class="material-icons align-middle me-1" style="font-size:16px;">close</i> Tidak, Batal
+            </button>
+            <a href="{% url 'logout' %}" style="flex:1; padding:12px 20px; background:linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border-radius:12px; font-weight:700; font-size:0.9rem; cursor:pointer; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; border:none; transition:all 0.2s;">
+                <i class="material-icons align-middle" style="font-size:16px;">logout</i> Ya, Logout
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes modalPop {
+    from { transform: scale(0.85); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+</style>
+
+<script>
+function confirmLogout() {
+    // Cek status closing sebelum menampilkan modal
+    $.ajax({
+        url: '/api/check-closing/',
+        type: 'GET',
+        success: function(resp) {
+            if(resp.status === 'success' && !resp.has_closed) {
+                // Belum closing
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Peringatan Kelalaian!',
+                    text: 'Anda belum mengisi Closing Kasir hari ini. Laporan wajib disubmit sebelum shift berakhir.',
+                    showCancelButton: true,
+                    confirmButtonText: '<i class="material-icons align-middle" style="font-size:16px;">lock_clock</i> Isi Closing Sekarang',
+                    cancelButtonText: 'Tetap Keluar',
+                    confirmButtonColor: '#3b82f6',
+                    cancelButtonColor: '#94a3b8',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Redirect ke halaman closing via HTMX atau regular
+                        $('#main-content').attr('hx-get', '{% url "closing_kasir" %}');
+                        htmx.process(document.body);
+                        htmx.ajax('GET', '{% url "closing_kasir" %}', '#main-content');
+                        
+                        // Tutup sidebar jika di mobile
+                        const sidebar = document.getElementById('mainSidebar');
+                        if (!sidebar.classList.contains('sidebar-collapsed')) {
+                            toggleSidebar();
+                        }
+                    } else if (result.dismiss === Swal.DismissReason.cancel) {
+                        // Tetap keluar
+                        window.location.href = "{% url 'logout' %}";
+                    }
+                });
+            } else {
+                // Sudah closing atau Admin, tampilkan modal logout biasa
+                var modal = document.getElementById('logout-modal');
+                modal.style.display = 'flex';
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) modal.style.display = 'none';
+                }, { once: true });
+            }
+        },
+        error: function() {
+            // Fallback jika error, langsung tampilkan modal
+            var modal = document.getElementById('logout-modal');
+            modal.style.display = 'flex';
+        }
+    });
+}
+</script>

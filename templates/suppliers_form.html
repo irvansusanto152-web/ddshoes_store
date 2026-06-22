@@ -36,7 +36,9 @@
                 type: 'POST',
                 success: function(resp) {
                     if (resp.status == 'success') {
-                        location.reload();
+                        $('#uni_modal').modal('hide');
+                        htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Data berhasil disimpan.', 'success'); }, 400);
                     } else {
                         showAlert("Terjadi kesalahan saat menyimpan data.");
                         end_loader();

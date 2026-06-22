@@ -36,7 +36,7 @@
                 <tr>
                     <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
                     <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ b.name }}</td>
-                    <td><span class="badge-glass badge-dark">{{ b.product_count }} produk</span></td>
+                    <td><span class="badge-glass badge-dark" title="{{ b.active_count }} siap dijual, dari total {{ b.product_count }} terdaftar">{{ b.active_count }} tersedia / {{ b.product_count }} total</span></td>
                     <td class="text-center">
                         <button class="btn-action btn-action-edit me-1 btn-edit-brand" data-id="{{ b.id }}" title="Edit">
                             <i class="material-icons">edit_note</i>
@@ -73,6 +73,13 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 }
             });
+            // Update visible row numbers
+            var visibleIndex = 1;
+            $("#brand-table tbody tr").each(function() {
+                if($(this).find('td').length > 1 && $(this).css('display') !== 'none') {
+                    $(this).find('td:eq(0)').text(visibleIndex++);
+                }
+            });
         });
 
         // Add
@@ -100,6 +107,7 @@
                 success: function(resp) {
                     if(resp.status == 'success') {
                         htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Data berhasil dihapus.', 'success'); }, 400);
                     } else {
                         showAlert("Gagal menghapus data.");
                         end_loader();

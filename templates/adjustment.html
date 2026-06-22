@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block title %}Penyesuaian Stok{% endblock %}
+{% block pageContent %}
+
+<div class="saas-header mb-4">
+    <div class="sh-title">
+        <h2>Penyesuaian Stok</h2>
+        <p>Catat pengurangan stok akibat barang rusak, hilang, atau retur ke supplier.</p>
+    </div>
+    <div class="sh-actions">
+        <button class="btn btn-primary" id="btn-add-adjustment">
+            <i class="material-icons me-1">add</i> Tambah Penyesuaian
+        </button>
+    </div>
+</div>
+
+<!-- Info Banner -->
+<div class="alert d-flex align-items-center mb-4 rounded-4 border-0 shadow-sm" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e;">
+    <i class="material-icons me-3" style="font-size: 28px; color: #d97706;">info</i>
+    <div>
+        <strong>Catatan Penting:</strong> Penyesuaian <strong>tidak dapat dihapus</strong> untuk menjaga integritas data. Jika ada kesalahan input, buat penyesuaian koreksi baru. Produk yang stoknya menjadi <strong>0</strong> akan otomatis dinonaktifkan dari katalog dan kasir.
+    </div>
+</div>
+
+<div class="glass-panel">
+    <div class="saas-toolbar mb-3">
+        <div class="st-search" style="position: relative; width: 100%; max-width: 400px;">
+            <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
+            <input type="text" id="search-adjustment" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari nama produk atau alasan...">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle saas-table" id="adjustment-table">
+            <thead>
+                <tr>
+                    <th width="5%" class="text-center">No</th>
+                    <th>Produk</th>
+                    <th>Merek / Kategori</th>
+                    <th class="text-center">Jumlah</th>
+                    <th class="text-center">Alasan</th>
+                    <th>Catatan</th>
+                    <th>Oleh</th>
+                    <th>Tanggal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for adj in adjustments %}
+                <tr>
+                    <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                    <td class="fw-bold" style="color: #1e293b;">
+                        {% if adj.product %}
+                            {{ adj.product.name }}
+                            <br><small class="text-muted">Ukuran: {{ adj.product.size }}</small>
+                        {% else %}
+                            <span class="text-muted fst-italic">Produk telah dihapus</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if adj.product %}
+                            {{ adj.product.brand.name|default:"-" }}
+                            <br><small class="text-muted">{{ adj.product.category.name|default:"-" }}</small>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="fw-bold text-danger" style="font-size: 1rem;">{{ adj.quantity }}</span>
+                    </td>
+                    <td class="text-center">
+                        {% if adj.reason == 'rusak' %}
+                            <span class="badge-glass" style="background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.3);">
+                                <i class="material-icons" style="font-size:12px; vertical-align: middle;">broken_image</i> Rusak / Cacat
+                            </span>
+                        {% elif adj.reason == 'hilang' %}
+                            <span class="badge-glass" style="background: rgba(245,158,11,0.1); color: #d97706; border: 1px solid rgba(245,158,11,0.3);">
+                                <i class="material-icons" style="font-size:12px; vertical-align: middle;">help_outline</i> Hilang
+                            </span>
+                        {% elif adj.reason == 'retur' %}
+                            <span class="badge-glass" style="background: rgba(99,102,241,0.1); color: #6366f1; border: 1px solid rgba(99,102,241,0.3);">
+                                <i class="material-icons" style="font-size:12px; vertical-align: middle;">undo</i> Retur Supplier
+                            </span>
+                        {% else %}
+                            <span class="badge-glass badge-dark">Lainnya</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted" style="font-size: 0.85rem; max-width: 200px;">{{ adj.notes|default:"-" }}</td>
+                    <td class="text-muted" style="font-size: 0.85rem;">{{ adj.adjusted_by.username|default:"-" }}</td>
+                    <td class="text-muted" style="font-size: 0.85rem; white-space: nowrap;">{{ adj.adjusted_at|date:"d M Y, H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <i class="material-icons">tune</i>
+                            <p>Belum ada riwayat penyesuaian stok.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function($) {
+        // Search
+        $("#search-adjustment").off("keyup").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("#adjustment-table tbody tr").filter(function() {
+                if($(this).find('td').length > 1) {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+                }
+            });
+        });
+
+        // Tambah Penyesuaian
+        $('#btn-add-adjustment').off('click').on('click', function() {
+            uni_modal("Tambah Penyesuaian Stok", "{% url 'adjustment_save' %}", 'modal-lg');
+        });
+    })(jQuery);
+</script>
+{% endblock %}

@@ -75,6 +75,13 @@
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 }
             });
+            // Update visible row numbers
+            var visibleIndex = 1;
+            $("#supplier-table tbody tr").each(function() {
+                if($(this).find('td').length > 1 && $(this).css('display') !== 'none') {
+                    $(this).find('td:eq(0)').text(visibleIndex++);
+                }
+            });
         });
 
         // Add
@@ -102,6 +109,7 @@
                 success: function(resp) {
                     if(resp.status == 'success') {
                         htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Data berhasil dihapus.', 'success'); }, 400);
                     } else {
                         showAlert("Gagal menghapus data.");
                         end_loader();

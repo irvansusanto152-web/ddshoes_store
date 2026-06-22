@@ -43,6 +43,7 @@ class Products(models.Model):
 
     category = models.ForeignKey(Categories, on_delete=models.SET_NULL, null=True)
     brand = models.ForeignKey(Brands, on_delete=models.SET_NULL, null=True)
+    product_code = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name='Kode Produk')
     name = models.CharField(max_length=255)
     size = models.CharField(max_length=50)
     condition = models.CharField(max_length=50, choices=CONDITION_CHOICES)
@@ -88,11 +89,18 @@ class Transactions(models.Model):
     ]
 
     cashier = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    subtotal_amount = models.IntegerField(default=0)
+    discount_amount = models.IntegerField(default=0)
     total_amount = models.IntegerField()
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
     cash_received = models.IntegerField(null=True, blank=True)
     change_amount = models.IntegerField(null=True, blank=True)
     transaction_date = models.DateTimeField(auto_now_add=True)
+
+    status = models.CharField(max_length=20, default='success', choices=[('success', 'Berhasil'), ('void', 'Dibatalkan')])
+    voided_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='voided_transactions')
+    void_reason = models.TextField(null=True, blank=True)
+    voided_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Trx {self.id} - {self.total_amount}"
@@ -119,5 +127,32 @@ class CashClosings(models.Model):
     is_locked = models.BooleanField(default=False)
     submitted_at = models.DateTimeField(auto_now_add=True)
 
+    # --- Audit: Buka Ulang Closing ---
+    unlocked_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='unlocked_closings', verbose_name='Dibuka oleh'
+    )
+    unlocked_at = models.DateTimeField(null=True, blank=True, verbose_name='Waktu dibuka')
+    unlock_reason = models.TextField(null=True, blank=True, verbose_name='Alasan dibuka')
+    unlock_count = models.PositiveSmallIntegerField(default=0, verbose_name='Jumlah dibuka ulang')
+
     def __str__(self):
         return f"Closing {self.cashier.username} - {self.closing_date}"
+
+class StockAdjustments(models.Model):
+    REASON_CHOICES = [
+        ('rusak', 'Rusak / Cacat'),
+        ('hilang', 'Hilang'),
+        ('retur', 'Retur ke Supplier'),
+        ('lainnya', 'Lainnya'),
+    ]
+
+    product = models.ForeignKey(Products, on_delete=models.SET_NULL, null=True, related_name='adjustments')
+    adjusted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    quantity = models.IntegerField()  # Negatif = pengurangan stok
+    reason = models.CharField(max_length=20, choices=REASON_CHOICES)
+    notes = models.TextField(null=True, blank=True)
+    adjusted_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Adj #{self.id} - {self.product} ({self.quantity})"

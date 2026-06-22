@@ -4,11 +4,58 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Sum, Count, F
+from django.db.models import Sum, Count, F, Q
 from django.utils import timezone
 from datetime import timedelta
-from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers, StockIns, StockInDetails, CashClosings, UserProfile
+from django.db import transaction
+from .models import Products, Transactions, TransactionDetails, Brands, Categories, Suppliers, StockIns, StockInDetails, CashClosings, UserProfile, StockAdjustments
 from django.contrib.auth.models import User
+
+
+def get_brand_initial(brand_name):
+    """Ambil inisial merek dari nama merek.
+    - 1 kata: ambil 2 huruf pertama (Nike → NK, Vans → VA)
+    - 2+ kata: ambil huruf pertama tiap kata (New Balance → NB, New Era → NE)
+    """
+    if not brand_name:
+        return 'XX'
+    words = brand_name.strip().upper().split()
+    if len(words) == 1:
+        # 1 kata: ambil 2 huruf pertama
+        word = ''.join(c for c in words[0] if c.isalpha())
+        return word[:2] if len(word) >= 2 else word.ljust(2, 'X')
+    else:
+        # 2+ kata: ambil huruf pertama tiap kata (max 4 karakter)
+        initials = ''.join(w[0] for w in words if w and w[0].isalpha())
+        return initials[:4] if initials else 'XX'
+
+
+def generate_product_code(brand_name, size):
+    """Generate kode produk format [Inisial Merek]-[Ukuran]-[Nomor Urut].
+    Contoh: NB-40-001, NK-42-003, AD-38-001
+    Dijamin unik karena nomor urut dihitung dari yang sudah ada + unique=True di DB.
+    """
+    # Bersihkan ukuran — ambil angka saja untuk konsistensi
+    import re
+    size_clean = re.sub(r'[^0-9a-zA-Z]', '', str(size)).upper() if size else 'XX'
+
+    brand_init = get_brand_initial(brand_name)
+    prefix = f'{brand_init}-{size_clean}'
+
+    # Hitung berapa produk dengan prefix yang sama sudah ada
+    existing_count = Products.objects.filter(
+        product_code__startswith=f'{prefix}-'
+    ).count()
+    new_num = existing_count + 1
+
+    candidate = f'{prefix}-{new_num:03d}'
+
+    # Double-check: pastikan kode belum dipakai (handle race condition)
+    while Products.objects.filter(product_code=candidate).exists():
+        new_num += 1
+        candidate = f'{prefix}-{new_num:03d}'
+
+    return candidate
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -40,34 +87,39 @@ def dashboard_view(request):
     if request.user.userprofile.role != 'admin':
         return redirect('pos_page')
 
-    today = timezone.now().date()
+    now = timezone.localtime(timezone.now())
+    today = now.date()
 
-    # 1. Total Stock (all products)
-    total_stock_dict = Products.objects.aggregate(total_stock=Sum('stock'))
-    total_stock = total_stock_dict['total_stock'] or 0
+    # 1. Total Jenis Sepatu (Count of varieties that are currently active and in stock)
+    total_stock = Products.objects.filter(status='active', stock__gt=0).count()
 
     # 2. Total Products Sold Today
-    sold_today_dict = TransactionDetails.objects.filter(transaction__transaction_date__date=today).aggregate(total_sold=Sum('quantity'))
+    sold_today_dict = TransactionDetails.objects.filter(transaction__transaction_date__date=today, transaction__status='success').aggregate(total_sold=Sum('quantity'))
     total_sold_today = sold_today_dict['total_sold'] or 0
 
     # 3. Revenue Today
-    revenue_today_dict = Transactions.objects.filter(transaction_date__date=today).aggregate(total_rev=Sum('total_amount'))
+    revenue_today_dict = Transactions.objects.filter(transaction_date__date=today, status='success').aggregate(total_rev=Sum('total_amount'))
     revenue_today = revenue_today_dict['total_rev'] or 0
 
     # 4. Barang Masuk Hari Ini
-    # Menjumlahkan total qty dari detail barang masuk hari ini
-    stockin_today = StockIns.objects.filter(received_date=today)
-    total_barang_masuk = sum([sum([d.quantity for d in si.details.all()]) for si in stockin_today])
+    # Menghitung jumlah catatan penerimaan (bukan total kuantitas)
+    total_barang_masuk = StockIns.objects.filter(received_date=today).count()
 
-    # Top 5 best selling products
-    top_products = Products.objects.annotate(total_sold=Sum('transactiondetails__quantity')).order_by('-total_sold')[:5]
+    # Top 5 best selling brands
+    top_brands = Brands.objects.annotate(
+        total_sold=Sum('products__transactiondetails__quantity')
+    ).filter(total_sold__gt=0).order_by('-total_sold')[:5]
+
+    # Dead Stock: 5 produk yang belum terjual dengan umur terlama
+    dead_stock = Products.objects.filter(stock__gt=0).order_by('created_at')[:5]
 
     context = {
         'total_stock': total_stock,
         'total_sold_today': total_sold_today,
         'revenue_today': revenue_today,
         'total_barang_masuk': total_barang_masuk,
-        'top_products': top_products,
+        'top_brands': top_brands,
+        'dead_stock': dead_stock,
     }
 
     return render(request, 'dashboard.html', context)
@@ -75,42 +127,95 @@ def dashboard_view(request):
 @login_required
 def dashboard_chart_data(request):
     period = request.GET.get('period', 'daily')
-    now = timezone.now()
+    now = timezone.localtime(timezone.now())
     labels = []
     data = []
+
+    total_sold = 0
+    total_revenue = 0
+    total_stockin = 0
+    start_date_str = ""
+    end_date_str = ""
 
     if period == 'daily':
         # Per jam hari ini
         today = now.date()
-        for i in range(8, 23): # jam 08:00 sampai 22:00
-            start_time = timezone.make_aware(timezone.datetime(today.year, today.month, today.day, i, 0, 0))
-            end_time = start_time + timedelta(hours=1)
+        start_date_str = today.strftime('%Y-%m-%d')
+        end_date_str = start_date_str
+        
+        # Calculate totals for today
+        total_revenue = Transactions.objects.filter(transaction_date__date=today, status='success').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_sold = TransactionDetails.objects.filter(transaction__transaction_date__date=today, transaction__status='success').aggregate(t=Sum('quantity'))['t'] or 0
+        total_stockin = StockIns.objects.filter(received_date=today).count()
+
+        from datetime import datetime as dt
+        for i in range(0, 24): # jam 00:00 sampai 23:00
+            # Buat waktu lokal (Asia/Jakarta) lalu konversi ke timezone-aware
+            start_local = timezone.make_aware(dt(today.year, today.month, today.day, i, 0, 0))
+            end_local   = start_local + timedelta(hours=1)
             labels.append(f"{i:02d}:00")
-            rev = Transactions.objects.filter(transaction_date__gte=start_time, transaction_date__lt=end_time).aggregate(t=Sum('total_amount'))['t'] or 0
+            rev = Transactions.objects.filter(
+                transaction_date__gte=start_local,
+                transaction_date__lt=end_local,
+                status='success'
+            ).aggregate(t=Sum('total_amount'))['t'] or 0
             data.append(rev)
+            
     elif period == 'weekly':
         # 7 hari terakhir
+        start_date = (now - timedelta(days=6)).date()
+        end_date = now.date()
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        
+        # Calculate totals for the week
+        total_revenue = Transactions.objects.filter(transaction_date__date__gte=start_date, transaction_date__date__lte=end_date, status='success').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_sold = TransactionDetails.objects.filter(transaction__transaction_date__date__gte=start_date, transaction__transaction_date__date__lte=end_date, transaction__status='success').aggregate(t=Sum('quantity'))['t'] or 0
+        total_stockin = StockIns.objects.filter(received_date__gte=start_date, received_date__lte=end_date).count()
+
         for i in range(6, -1, -1):
             date = (now - timedelta(days=i)).date()
             labels.append(date.strftime('%b %d'))
-            rev = Transactions.objects.filter(transaction_date__date=date).aggregate(t=Sum('total_amount'))['t'] or 0
+            rev = Transactions.objects.filter(transaction_date__date=date, status='success').aggregate(t=Sum('total_amount'))['t'] or 0
             data.append(rev)
+            
     elif period == 'monthly':
         # 30 hari terakhir
+        start_date = (now - timedelta(days=29)).date()
+        end_date = now.date()
+        start_date_str = start_date.strftime('%Y-%m-%d')
+        end_date_str = end_date.strftime('%Y-%m-%d')
+        
+        # Calculate totals for the month
+        total_revenue = Transactions.objects.filter(transaction_date__date__gte=start_date, transaction_date__date__lte=end_date, status='success').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_sold = TransactionDetails.objects.filter(transaction__transaction_date__date__gte=start_date, transaction__transaction_date__date__lte=end_date, transaction__status='success').aggregate(t=Sum('quantity'))['t'] or 0
+        total_stockin = StockIns.objects.filter(received_date__gte=start_date, received_date__lte=end_date).count()
+
         for i in range(29, -1, -1):
             date = (now - timedelta(days=i)).date()
             labels.append(date.strftime('%d %b'))
-            rev = Transactions.objects.filter(transaction_date__date=date).aggregate(t=Sum('total_amount'))['t'] or 0
+            rev = Transactions.objects.filter(transaction_date__date=date, status='success').aggregate(t=Sum('total_amount'))['t'] or 0
             data.append(rev)
 
-    return JsonResponse({'labels': labels, 'data': data})
+    return JsonResponse({
+        'labels': labels, 
+        'data': data,
+        'total_sold': total_sold,
+        'total_revenue': total_revenue,
+        'total_stockin': total_stockin,
+        'start_date': start_date_str,
+        'end_date': end_date_str
+    })
 
 # --- BRANDS ---
 @login_required
 def brands_list(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
-    brands = Brands.objects.annotate(product_count=Count('products')).order_by('name')
+    brands = Brands.objects.annotate(
+        product_count=Count('products', distinct=True),
+        active_count=Count('products', filter=Q(products__status='active', products__stock__gt=0), distinct=True)
+    ).order_by('name')
     return render(request, 'brands.html', {'brands': brands})
 
 @login_required
@@ -122,11 +227,11 @@ def brands_save(request):
             brand = Brands.objects.get(id=id)
             brand.name = name
             brand.save()
-            messages.success(request, "Merek berhasil diubah.")
+            msg = "Merek berhasil diubah."
         else:
             Brands.objects.create(name=name)
-            messages.success(request, "Merek berhasil ditambahkan.")
-        return JsonResponse({'status': 'success'})
+            msg = "Merek berhasil ditambahkan."
+        return JsonResponse({'status': 'success', 'msg': msg})
     
     id = request.GET.get('id', '')
     brand = Brands.objects.get(id=id) if id else None
@@ -137,15 +242,17 @@ def brands_delete(request):
     if request.method == 'POST':
         id = request.POST.get('id')
         Brands.objects.get(id=id).delete()
-        messages.success(request, "Merek berhasil dihapus.")
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'msg': 'Merek berhasil dihapus.'})
 
 # --- CATEGORIES ---
 @login_required
 def categories_list(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
-    categories = Categories.objects.annotate(product_count=Count('products')).order_by('name')
+    categories = Categories.objects.annotate(
+        product_count=Count('products', distinct=True),
+        active_count=Count('products', filter=Q(products__status='active', products__stock__gt=0), distinct=True)
+    ).order_by('name')
     return render(request, 'categories.html', {'categories': categories})
 
 @login_required
@@ -157,11 +264,11 @@ def categories_save(request):
             cat = Categories.objects.get(id=id)
             cat.name = name
             cat.save()
-            messages.success(request, "Kategori berhasil diubah.")
+            msg = "Kategori berhasil diubah."
         else:
             Categories.objects.create(name=name)
-            messages.success(request, "Kategori berhasil ditambahkan.")
-        return JsonResponse({'status': 'success'})
+            msg = "Kategori berhasil ditambahkan."
+        return JsonResponse({'status': 'success', 'msg': msg})
     
     id = request.GET.get('id', '')
     category = Categories.objects.get(id=id) if id else None
@@ -172,8 +279,7 @@ def categories_delete(request):
     if request.method == 'POST':
         id = request.POST.get('id')
         Categories.objects.get(id=id).delete()
-        messages.success(request, "Kategori berhasil dihapus.")
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'msg': 'Kategori berhasil dihapus.'})
 
 # --- SUPPLIERS ---
 @login_required
@@ -196,11 +302,11 @@ def suppliers_save(request):
             sup.phone = phone
             sup.notes = notes
             sup.save()
-            messages.success(request, "Pemasok berhasil diubah.")
+            msg = "Pemasok berhasil diubah."
         else:
             Suppliers.objects.create(name=name, phone=phone, notes=notes)
-            messages.success(request, "Pemasok berhasil ditambahkan.")
-        return JsonResponse({'status': 'success'})
+            msg = "Pemasok berhasil ditambahkan."
+        return JsonResponse({'status': 'success', 'msg': msg})
     
     id = request.GET.get('id', '')
     supplier = Suppliers.objects.get(id=id) if id else None
@@ -211,16 +317,21 @@ def suppliers_delete(request):
     if request.method == 'POST':
         id = request.POST.get('id')
         Suppliers.objects.get(id=id).delete()
-        messages.success(request, "Pemasok berhasil dihapus.")
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'msg': 'Pemasok berhasil dihapus.'})
 
 # --- PRODUCTS ---
 @login_required
 def products_list(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
-    products = Products.objects.select_related('brand', 'category').all().order_by('-id')
-    return render(request, 'products.html', {'products': products})
+    products = Products.objects.select_related('brand', 'category').order_by('-id')
+    brands = Brands.objects.all().order_by('name')
+    categories = Categories.objects.all().order_by('name')
+    return render(request, 'products.html', {
+        'products': products,
+        'brands': brands,
+        'categories': categories
+    })
 
 @login_required
 def products_save(request):
@@ -242,6 +353,8 @@ def products_save(request):
 
         if id:
             p = Products.objects.get(id=id)
+            if p.status == 'inactive':
+                return JsonResponse({'status': 'error', 'msg': 'Produk yang sudah terjual/nonaktif tidak dapat diedit.'})
             p.name = name
             p.category = cat
             p.brand = brand
@@ -250,23 +363,26 @@ def products_save(request):
             p.description = description
             p.buy_price = buy_price
             p.sell_price = sell_price
-            # stock usually updated via stockin, but allow edit here just in case? Or maybe keep it? Let's allow edit.
-            p.stock = stock
+            # Stok tidak boleh diubah dari form edit produk
             if image:
                 p.image = image
             p.save()
-            messages.success(request, "Produk berhasil diubah.")
+            msg = "Produk berhasil diubah."
         else:
+            # Produk baru selalu mulai dari stok 0
             p = Products.objects.create(
                 name=name, category=cat, brand=brand, size=size,
                 condition=condition, description=description,
-                buy_price=buy_price, sell_price=sell_price, stock=stock
+                buy_price=buy_price, sell_price=sell_price, stock=0,
+                product_code=generate_product_code(
+                    brand.name if brand else '', size
+                )
             )
             if image:
                 p.image = image
                 p.save()
-            messages.success(request, "Produk berhasil ditambahkan.")
-        return JsonResponse({'status': 'success', 'id': p.id, 'name': p.name})
+            msg = "Produk berhasil ditambahkan."
+        return JsonResponse({'status': 'success', 'id': p.id, 'name': p.name, 'msg': msg})
     
     id = request.GET.get('id', '')
     product = Products.objects.get(id=id) if id else None
@@ -289,14 +405,16 @@ def products_delete(request):
     if request.method == 'POST':
         id = request.POST.get('id')
         Products.objects.get(id=id).delete()
-        messages.success(request, "Produk berhasil dihapus.")
-        return JsonResponse({'status': 'success'})
+        return JsonResponse({'status': 'success', 'msg': 'Produk berhasil dihapus.'})
 
 @login_required
 def products_toggle_status(request):
     if request.method == 'POST':
         id = request.POST.get('id')
         p = Products.objects.get(id=id)
+        if p.status == 'inactive' and p.stock == 0:
+            return JsonResponse({'status': 'error', 'msg': 'Produk dengan stok 0 tidak dapat diaktifkan manual. Gunakan fitur Retur Transaksi.'})
+            
         if p.status == 'active':
             p.status = 'inactive'
             msg = "Produk dinonaktifkan."
@@ -304,15 +422,23 @@ def products_toggle_status(request):
             p.status = 'active'
             msg = "Produk diaktifkan."
         p.save()
-        messages.success(request, msg)
-        return JsonResponse({'status': 'success', 'new_status': p.status})
+        return JsonResponse({'status': 'success', 'new_status': p.status, 'msg': msg})
 
 # --- STOCK IN ---
 @login_required
 def stockin_list(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
-    stockins = StockIns.objects.select_related('supplier', 'received_by').annotate(total_items=Count('details')).order_by('-received_date', '-id')
+        
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    queryset = StockIns.objects.select_related('supplier', 'received_by').annotate(total_items=Count('details'))
+    
+    if start_date and end_date:
+        queryset = queryset.filter(received_date__gte=start_date, received_date__lte=end_date)
+        
+    stockins = queryset.order_by('-received_date', '-id')
     return render(request, 'stockin.html', {'stockins': stockins})
 
 @login_required
@@ -326,17 +452,23 @@ def stockin_detail(request, pk):
 def stockin_save(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
-    
-    if request.method == 'POST':
-        supplier_id = request.POST.get('supplier_id')
-        received_date = request.POST.get('received_date')
-        notes = request.POST.get('notes', '')
-        
-        product_ids = request.POST.getlist('product_id[]')
-        quantities = request.POST.getlist('quantity[]')
-        buy_prices = request.POST.getlist('buy_price[]')
 
-        if not supplier_id or not received_date or not product_ids:
+    if request.method == 'POST':
+        supplier_id   = request.POST.get('supplier_id')
+        received_date = request.POST.get('received_date')
+        notes         = request.POST.get('notes', '')
+
+        # Data per-baris produk (format baru)
+        product_names = request.POST.getlist('product_name[]')
+        brand_ids     = request.POST.getlist('brand_id[]')
+        category_ids  = request.POST.getlist('category_id[]')
+        sizes         = request.POST.getlist('size[]')
+        conditions_in = request.POST.getlist('condition[]')
+        buy_prices    = request.POST.getlist('buy_price[]')
+        sell_prices   = request.POST.getlist('sell_price[]')
+        quantities    = request.POST.getlist('quantity[]')
+
+        if not supplier_id or not received_date or not product_names:
             messages.error(request, "Data penerimaan tidak lengkap.")
             return redirect('stockin_save')
 
@@ -348,36 +480,93 @@ def stockin_save(request):
             notes=notes
         )
 
-        for i in range(len(product_ids)):
-            pid = product_ids[i]
-            qty_str = quantities[i]
-            bp_str = buy_prices[i]
-            
-            qty = int(qty_str) if qty_str.strip() else 0
-            bp = int(bp_str) if bp_str.strip() else 0
-            
-            if qty > 0:
-                product = Products.objects.get(id=pid)
-                final_bp = bp if bp > 0 else product.buy_price
-                StockInDetails.objects.create(
-                    stock_in=si,
-                    product=product,
-                    quantity=qty,
-                    buy_price=final_bp
-                )
-                # Note: signals.py handles incrementing product.stock
-                
-                # Update product buy_price if changed? The PRD implies stock details have buy_price, let's also update the master product buy_price to the latest one
-                if bp > 0:
-                    product.buy_price = bp
-                    product.save()
+        new_product_count = 0
+        for i in range(len(product_names)):
+            nama    = product_names[i].strip() if i < len(product_names) else ''
+            bid     = brand_ids[i]     if i < len(brand_ids)     else ''
+            cid     = category_ids[i]  if i < len(category_ids)  else ''
+            size    = sizes[i].strip() if i < len(sizes)          else ''
+            cond    = conditions_in[i] if i < len(conditions_in)  else 'Baru'
+            bp_str  = buy_prices[i]    if i < len(buy_prices)     else '0'
+            sp_str  = sell_prices[i]   if i < len(sell_prices)    else '0'
+            qty_str = quantities[i]    if i < len(quantities)     else '0'
 
-        messages.success(request, "Penerimaan barang berhasil dicatat.")
+            if not nama:
+                continue
+
+            qty = int(qty_str) if qty_str.strip().isdigit() else 0
+            bp  = int(bp_str)  if bp_str.strip().isdigit()  else 0
+            sp  = int(sp_str)  if sp_str.strip().isdigit()  else 0
+
+            if qty < 1:
+                continue
+
+            brand    = Brands.objects.get(id=bid)       if bid else None
+            category = Categories.objects.get(id=cid)   if cid else None
+
+            # Cari produk yang sudah ada berdasarkan nama + ukuran + kondisi
+            product_qs = Products.objects.filter(
+                name__iexact=nama,
+                size__iexact=size,
+                condition=cond
+            )
+
+            if product_qs.exists():
+                # Produk sudah ada — update harga jika berubah
+                product = product_qs.first()
+                updated = False
+                if bp > 0 and product.buy_price != bp:
+                    product.buy_price = bp
+                    updated = True
+                if sp > 0 and product.sell_price != sp:
+                    product.sell_price = sp
+                    updated = True
+                if updated:
+                    product.save()
+            else:
+                # Produk belum ada — buat otomatis
+                product = Products.objects.create(
+                    name=nama,
+                    brand=brand,
+                    category=category,
+                    size=size,
+                    condition=cond,
+                    buy_price=bp,
+                    sell_price=sp,
+                    stock=0,
+                    status='active',
+                    product_code=generate_product_code(
+                        brand.name if brand else '', size
+                    )
+                )
+                new_product_count += 1
+
+            StockInDetails.objects.create(
+                stock_in=si,
+                product=product,
+                quantity=qty,
+                buy_price=bp if bp > 0 else product.buy_price
+            )
+            # signals.py secara otomatis menambah product.stock
+
+        if new_product_count > 0:
+            messages.success(request, f"Berhasil! {new_product_count} produk baru ditambahkan ke katalog dan stok telah diperbarui.")
+        else:
+            messages.success(request, "Penerimaan barang berhasil dicatat. Stok produk telah diperbarui.")
+
         return redirect('stockin_list')
 
-    suppliers = Suppliers.objects.all().order_by('name')
-    products = Products.objects.select_related('brand', 'category').order_by('name')
-    return render(request, 'stockin_form.html', {'suppliers': suppliers, 'products': products})
+    # GET — tampilkan form
+    suppliers  = Suppliers.objects.all().order_by('name')
+    brands     = Brands.objects.all().order_by('name')
+    categories = Categories.objects.all().order_by('name')
+    conditions = Products.CONDITION_CHOICES
+    return render(request, 'stockin_form.html', {
+        'suppliers':  suppliers,
+        'brands':     brands,
+        'categories': categories,
+        'conditions': conditions,
+    })
 
 # --- USERS ---
 @login_required
@@ -408,12 +597,12 @@ def users_save(request):
             up.role = role
             up.phone = phone
             up.save()
-            messages.success(request, "Kasir/User berhasil diubah.")
+            msg = "User berhasil diubah."
         else:
             u = User.objects.create_user(username=username, password=password)
             UserProfile.objects.create(user=u, role=role, phone=phone)
-            messages.success(request, "Kasir/User berhasil ditambahkan.")
-        return JsonResponse({'status': 'success'})
+            msg = "User baru berhasil ditambahkan."
+        return JsonResponse({'status': 'success', 'msg': msg})
 
     id = request.GET.get('id', '')
     u = User.objects.get(id=id) if id else None
@@ -431,8 +620,7 @@ def users_toggle_status(request):
             u.is_active = True
             msg = "Akun diaktifkan."
         u.save()
-        messages.success(request, msg)
-        return JsonResponse({'status': 'success', 'is_active': u.is_active})
+        return JsonResponse({'status': 'success', 'is_active': u.is_active, 'msg': msg})
 
 # --- REPORTS ---
 @login_required
@@ -443,8 +631,9 @@ def sales_report(request):
     end_date = request.GET.get('end_date')
     cashier_id = request.GET.get('cashier_id')
     payment_method = request.GET.get('payment_method')
+    brand_id = request.GET.get('brand_id')
 
-    qs = Transactions.objects.select_related('cashier').all().order_by('-transaction_date')
+    qs = Transactions.objects.select_related('cashier').annotate(total_qty=Sum('details__quantity')).order_by('-transaction_date')
 
     if start_date:
         qs = qs.filter(transaction_date__date__gte=start_date)
@@ -454,9 +643,14 @@ def sales_report(request):
         qs = qs.filter(cashier_id=cashier_id)
     if payment_method:
         qs = qs.filter(payment_method=payment_method)
+    if brand_id:
+        # Filter transactions that include products from this brand
+        qs = qs.filter(details__product__brand_id=brand_id).distinct()
 
     cashiers = User.objects.filter(userprofile__role='kasir')
-    total_revenue = qs.aggregate(t=Sum('total_amount'))['t'] or 0
+    qs_success = qs.filter(status='success')
+    total_revenue = qs_success.aggregate(t=Sum('total_amount'))['t'] or 0
+    total_discount = qs_success.aggregate(d=Sum('discount_amount'))['d'] or 0
 
     return render(request, 'sales_report.html', {
         'transactions': qs,
@@ -465,7 +659,8 @@ def sales_report(request):
         'end_date': end_date,
         'cashier_id': cashier_id,
         'payment_method': payment_method,
-        'total_revenue': total_revenue
+        'total_revenue': total_revenue,
+        'total_discount': total_discount
     })
 
 @login_required
@@ -476,7 +671,7 @@ def inventory_report(request):
     brand_id = request.GET.get('brand_id')
     category_id = request.GET.get('category_id')
 
-    qs = Products.objects.select_related('brand', 'category').filter(status='active').order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(stock__gt=0).order_by('name')
     if brand_id:
         qs = qs.filter(brand_id=brand_id)
     if category_id:
@@ -500,6 +695,57 @@ def inventory_report(request):
     })
 
 @login_required
+def adjustment_list(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+    adjustments = StockAdjustments.objects.select_related('product', 'product__brand', 'product__category', 'adjusted_by').order_by('-adjusted_at')
+    return render(request, 'adjustment.html', {'adjustments': adjustments})
+
+@login_required
+def adjustment_save(request):
+    if request.user.userprofile.role != 'admin':
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        quantity = int(request.POST.get('quantity', 0))
+        reason = request.POST.get('reason')
+        notes = request.POST.get('notes', '')
+
+        try:
+            product = Products.objects.get(id=product_id)
+        except Products.DoesNotExist:
+            return JsonResponse({'status': 'error', 'msg': 'Produk tidak ditemukan.'})
+
+        if quantity <= 0:
+            return JsonResponse({'status': 'error', 'msg': 'Jumlah pengurangan harus lebih dari 0.'})
+
+        if quantity > product.stock:
+            return JsonResponse({'status': 'error', 'msg': f'Jumlah melebihi stok saat ini ({product.stock} unit).'})
+
+        # Simpan catatan penyesuaian
+        StockAdjustments.objects.create(
+            product=product,
+            adjusted_by=request.user,
+            quantity=-quantity,  # disimpan sebagai angka negatif
+            reason=reason,
+            notes=notes
+        )
+
+        # Kurangi stok produk
+        product.stock -= quantity
+        if product.stock <= 0:
+            product.stock = 0
+            product.status = 'inactive'
+        product.save()
+
+        return JsonResponse({'status': 'success', 'msg': f'Penyesuaian berhasil. Stok "{product.name}" berkurang {quantity} unit.'})
+
+    # GET: tampilkan form
+    products = Products.objects.filter(stock__gt=0).select_related('brand', 'category').order_by('name')
+    return render(request, 'adjustment_form.html', {'products': products})
+
+@login_required
 def closing_admin(request):
     if request.user.userprofile.role != 'admin':
         return redirect('dashboard')
@@ -507,7 +753,7 @@ def closing_admin(request):
     date_filter = request.GET.get('date')
     cashier_id = request.GET.get('cashier_id')
 
-    qs = CashClosings.objects.select_related('cashier').all().order_by('-closing_date', '-id')
+    qs = CashClosings.objects.select_related('cashier', 'unlocked_by').all().order_by('-closing_date', '-id')
     if date_filter:
         qs = qs.filter(closing_date=date_filter)
     if cashier_id:
@@ -533,7 +779,7 @@ def pos_page(request):
     brands = Brands.objects.all()
 
     # Embed initial product data to avoid extra AJAX request on first load
-    qs = Products.objects.select_related('brand', 'category').filter(stock__gt=0).order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
     initial_products = []
     for p in qs:
         initial_products.append({
@@ -546,6 +792,7 @@ def pos_page(request):
             'stock': p.stock,
             'image': p.image.url if p.image else '',
             'category_id': p.category_id,
+            'product_code': p.product_code or '-',
         })
 
     return render(request, 'pos.html', {
@@ -560,9 +807,11 @@ def pos_get_products(request):
     cat_id = request.GET.get('category_id')
     brand_id = request.GET.get('brand_id')
 
-    qs = Products.objects.select_related('brand', 'category').filter(stock__gt=0).order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
     if query:
-        qs = qs.filter(name__icontains=query)
+        qs = qs.filter(
+            Q(name__icontains=query) | Q(product_code__icontains=query)
+        )
     if cat_id:
         qs = qs.filter(category_id=cat_id)
     if brand_id:
@@ -578,11 +827,13 @@ def pos_get_products(request):
             'condition': p.condition,
             'price': p.sell_price,
             'stock': p.stock,
-            'image': p.image.url if p.image else ''
+            'image': p.image.url if p.image else '',
+            'product_code': p.product_code or '-',
         })
     return JsonResponse({'products': data})
 
 @login_required
+@transaction.atomic
 def pos_process_payment(request):
     if request.method == 'POST':
         try:
@@ -590,20 +841,46 @@ def pos_process_payment(request):
             items = data.get('items', [])
             payment_method = data.get('payment_method')
             cash_received = int(data.get('cash_received', 0))
+            discount_type = data.get('discount_type', 'nominal')
+            discount_value = float(data.get('discount_value', 0))
 
             if not items:
                 return JsonResponse({'status': 'error', 'message': 'Keranjang kosong.'})
 
             # Calculate total
-            total_amount = 0
+            subtotal_amount = 0
             product_updates = []
+            
+            # Sort items by id to avoid deadlocks
+            item_ids = [item['id'] for item in items]
+            
+            # Lock the rows for these products
+            products_locked = Products.objects.select_for_update().filter(id__in=item_ids)
+            products_dict = {p.id: p for p in products_locked}
+
             for item in items:
-                p = Products.objects.get(id=item['id'])
+                p = products_dict.get(item['id'])
+                if not p:
+                    return JsonResponse({'status': 'error', 'message': f'Produk ID {item["id"]} tidak ditemukan.'})
+                
                 if p.stock < int(item['qty']):
-                    return JsonResponse({'status': 'error', 'message': f'Stok {p.name} tidak mencukupi.'})
+                    return JsonResponse({'status': 'error', 'message': f'Stok {p.name} tidak mencukupi. Sisa stok: {p.stock}.'})
+                
                 subtotal = p.sell_price * int(item['qty'])
-                total_amount += subtotal
+                subtotal_amount += subtotal
                 product_updates.append((p, int(item['qty']), subtotal))
+
+            # Calculate Discount
+            discount_amount = 0
+            if discount_value > 0:
+                if discount_type == 'percent':
+                    discount_amount = int(subtotal_amount * (min(discount_value, 100) / 100))
+                else:
+                    discount_amount = int(discount_value)
+                    if discount_amount > subtotal_amount:
+                        discount_amount = subtotal_amount
+
+            total_amount = subtotal_amount - discount_amount
 
             change_amount = 0
             if payment_method == 'tunai':
@@ -616,6 +893,8 @@ def pos_process_payment(request):
             # Create Transaction
             trx = Transactions.objects.create(
                 cashier=request.user,
+                subtotal_amount=subtotal_amount,
+                discount_amount=discount_amount,
                 total_amount=total_amount,
                 payment_method=payment_method,
                 cash_received=cash_received,
@@ -637,11 +916,13 @@ def pos_process_payment(request):
                 'id': trx.id,
                 'date': trx.transaction_date.strftime("%d %b %Y %H:%M"),
                 'cashier': trx.cashier.username,
+                'subtotal': trx.subtotal_amount,
+                'discount': trx.discount_amount,
                 'total': trx.total_amount,
                 'method': trx.get_payment_method_display(),
                 'received': trx.cash_received,
                 'change': trx.change_amount,
-                'items': [{'name': p.name, 'size': p.size, 'qty': qty, 'price': p.sell_price, 'subtotal': subtotal} for p, qty, subtotal in product_updates]
+                'items': [{'name': p.name, 'size': p.size, 'qty': qty, 'price': p.sell_price, 'subtotal': subtotal, 'product_code': p.product_code or '-'} for p, qty, subtotal in product_updates]
             }
 
             return JsonResponse({'status': 'success', 'message': 'Transaksi berhasil.', 'receipt': receipt_data})
@@ -670,7 +951,7 @@ def catalog_kasir(request):
     brand_id = request.GET.get('brand_id', '')
     category_id = request.GET.get('category_id', '')
 
-    qs = Products.objects.select_related('brand', 'category').filter(status='active').order_by('name')
+    qs = Products.objects.select_related('brand', 'category').filter(status='active', stock__gt=0).order_by('name')
     if query:
         qs = qs.filter(name__icontains=query)
     if brand_id:
@@ -696,22 +977,33 @@ def closing_kasir(request):
     if request.user.userprofile.role not in ['admin', 'kasir']:
         return redirect('dashboard')
 
-    today = timezone.now().date()
+    # Gunakan waktu lokal (Asia/Jakarta) agar sesuai dengan jam kerja kasir
+    today = timezone.localtime(timezone.now()).date()
     cashier = request.user
 
     # Check if already submitted today
     existing_closing = CashClosings.objects.filter(cashier=cashier, closing_date=today).first()
 
-    # Compute today's totals from transactions
-    today_transactions = Transactions.objects.filter(
-        cashier=cashier,
-        transaction_date__date=today
-    )
-    total_cash    = today_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
-    total_transfer= today_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
-    total_qris    = today_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
+    # Filter transaksi: jika admin maka ambil semua transaksi hari ini,
+    # jika kasir maka hanya miliknya sendiri
+    if request.user.userprofile.role == 'admin':
+        today_transactions = Transactions.objects.filter(
+            transaction_date__date=today
+        )
+    else:
+        today_transactions = Transactions.objects.filter(
+            cashier=cashier,
+            transaction_date__date=today
+        )
+    
+    # Hanya hitung transaksi yang sukses
+    success_transactions = today_transactions.filter(status='success')
+
+    total_cash    = success_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
+    total_transfer= success_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
+    total_qris    = success_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
     grand_total   = total_cash + total_transfer + total_qris
-    trx_count     = today_transactions.count()
+    trx_count     = success_transactions.count()
 
     return render(request, 'closing_kasir.html', {
         'today': today,
@@ -729,34 +1021,145 @@ def closing_submit(request):
         if request.user.userprofile.role not in ['admin', 'kasir']:
             return JsonResponse({'status': 'error', 'message': 'Akses ditolak.'})
 
-        today = timezone.now().date()
+        # Gunakan waktu lokal (Asia/Jakarta)
+        today = timezone.localtime(timezone.now()).date()
         cashier = request.user
-
-        if CashClosings.objects.filter(cashier=cashier, closing_date=today).exists():
-            return JsonResponse({'status': 'error', 'message': 'Closing hari ini sudah dikunci.'})
 
         actual_cash = int(request.POST.get('actual_cash', 0))
         notes = request.POST.get('notes', '')
 
-        today_transactions = Transactions.objects.filter(cashier=cashier, transaction_date__date=today)
-        total_cash    = today_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
-        total_transfer= today_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
-        total_qris    = today_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
+        # Hitung dari transaksi yang relevan (konsisten dengan closing_kasir view)
+        if request.user.userprofile.role == 'admin':
+            today_transactions = Transactions.objects.filter(transaction_date__date=today)
+        else:
+            today_transactions = Transactions.objects.filter(cashier=cashier, transaction_date__date=today)
 
-        difference = actual_cash - total_cash
+        # Hanya hitung transaksi yang sukses
+        success_transactions = today_transactions.filter(status='success')
 
-        CashClosings.objects.create(
-            cashier=cashier,
-            closing_date=today,
-            system_cash_total=total_cash,
-            system_transfer_total=total_transfer,
-            system_qris_total=total_qris,
-            actual_cash=actual_cash,
-            cash_difference=difference,
-            notes=notes,
-            is_locked=True
-        )
+        total_cash     = success_transactions.filter(payment_method='tunai').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_transfer = success_transactions.filter(payment_method='transfer_bri').aggregate(t=Sum('total_amount'))['t'] or 0
+        total_qris     = success_transactions.filter(payment_method='qris').aggregate(t=Sum('total_amount'))['t'] or 0
+        difference     = actual_cash - total_cash
+
+        # Cek apakah sudah ada record (bisa jadi dibuka ulang oleh admin)
+        existing = CashClosings.objects.filter(cashier=cashier, closing_date=today).first()
+
+        if existing:
+            # Jika masih terkunci (bukan dibuka ulang), tolak
+            if existing.is_locked:
+                return JsonResponse({'status': 'error', 'message': 'Closing hari ini sudah dikunci. Hubungi admin untuk membukanya.'})
+            # Update record yang sudah ada (setelah dibuka ulang)
+            existing.system_cash_total    = total_cash
+            existing.system_transfer_total = total_transfer
+            existing.system_qris_total    = total_qris
+            existing.actual_cash          = actual_cash
+            existing.cash_difference      = difference
+            existing.notes                = notes
+            existing.is_locked            = True
+            existing.save()
+        else:
+            # Buat record baru (pertama kali closing)
+            CashClosings.objects.create(
+                cashier=cashier,
+                closing_date=today,
+                system_cash_total=total_cash,
+                system_transfer_total=total_transfer,
+                system_qris_total=total_qris,
+                actual_cash=actual_cash,
+                cash_difference=difference,
+                notes=notes,
+                is_locked=True
+            )
 
         messages.success(request, "Closing kasir berhasil dikunci!")
         return JsonResponse({'status': 'success'})
     return JsonResponse({'status': 'error', 'message': 'Invalid method'})
+
+
+# --- CLOSING: BUKA ULANG (Admin Only) ---
+@login_required
+def closing_unlock(request):
+    """Admin membuka kembali closing kasir yang sudah terkunci."""
+    if request.user.userprofile.role != 'admin':
+        return JsonResponse({'status': 'error', 'message': 'Hanya admin yang dapat membuka kembali closing.'})
+
+    if request.method == 'POST':
+        closing_id = request.POST.get('closing_id')
+        reason     = request.POST.get('reason', '').strip()
+
+        if not reason:
+            return JsonResponse({'status': 'error', 'message': 'Alasan wajib diisi.'})
+
+        try:
+            closing = CashClosings.objects.select_related('cashier').get(id=closing_id)
+        except CashClosings.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Data closing tidak ditemukan.'})
+
+        if not closing.is_locked:
+            return JsonResponse({'status': 'error', 'message': 'Closing ini sudah dalam kondisi terbuka.'})
+
+        closing.is_locked     = False
+        closing.unlocked_by   = request.user
+        closing.unlocked_at   = timezone.now()
+        closing.unlock_reason = reason
+        closing.unlock_count  = (closing.unlock_count or 0) + 1
+        closing.save()
+
+        return JsonResponse({
+            'status': 'success',
+            'message': f'Closing {closing.cashier.username} ({closing.closing_date}) berhasil dibuka. Kasir dapat mengisi ulang.'
+        })
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid method'})
+
+# --- VOID / RETUR TRANSAKSI ---
+@login_required
+@transaction.atomic
+def transaction_void(request, pk):
+    """Membatalkan transaksi dan mengembalikan stok produk ke 1/aktif."""
+    if request.user.userprofile.role != 'admin':
+        return JsonResponse({'status': 'error', 'message': 'Hanya admin yang dapat membatalkan transaksi.'})
+
+    if request.method == 'POST':
+        try:
+            trx = Transactions.objects.prefetch_related('details__product').get(id=pk)
+        except Transactions.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Transaksi tidak ditemukan.'})
+
+        if trx.status == 'void':
+            return JsonResponse({'status': 'error', 'message': 'Transaksi ini sudah dibatalkan sebelumnya.'})
+
+        reason = request.POST.get('reason', '').strip()
+        if not reason:
+            return JsonResponse({'status': 'error', 'message': 'Alasan retur/pembatalan wajib diisi.'})
+
+        # Kembalikan stok
+        for detail in trx.details.all():
+            product = detail.product
+            product.stock += detail.quantity
+            product.status = 'active'
+            product.save()
+
+        # Update status transaksi
+        trx.status = 'void'
+        trx.voided_by = request.user
+        trx.void_reason = reason
+        trx.voided_at = timezone.now()
+        trx.save()
+
+        return JsonResponse({'status': 'success', 'message': f'Transaksi {trx.id} berhasil dibatalkan dan stok dikembalikan.'})
+
+    return JsonResponse({'status': 'error', 'message': 'Metode tidak diizinkan.'})
+
+# --- CHECK CLOSING KASIR ---
+@login_required
+def check_closing_status(request):
+    """Mengecek apakah user (kasir) sudah submit closing hari ini."""
+    if request.user.userprofile.role != 'kasir':
+        return JsonResponse({'status': 'success', 'has_closed': True}) # Admin bebas keluar
+    
+    today = timezone.localtime(timezone.now()).date()
+    # Cek apakah ada record closing hari ini untuk user
+    existing = CashClosings.objects.filter(cashier=request.user, closing_date=today).exists()
+    return JsonResponse({'status': 'success', 'has_closed': existing})

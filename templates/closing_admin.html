@@ -41,7 +41,7 @@
         <table class="table table-hover align-middle saas-table" id="closing-table">
             <thead>
                 <tr>
-                    <th width="5%" class="text-center">No</th>
+                    <th width="4%" class="text-center">No</th>
                     <th>Tanggal</th>
                     <th>Kasir</th>
                     <th class="text-end">Sistem (Tunai)</th>
@@ -49,13 +49,17 @@
                     <th class="text-end">Selisih</th>
                     <th class="text-center">Status</th>
                     <th>Catatan</th>
+                    <th class="text-center d-print-none">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 {% for cl in closings %}
                 <tr>
                     <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
-                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ cl.closing_date|date:"d M Y" }} <br><small class="text-muted" style="font-size: 0.75rem;">{{ cl.submitted_at|time:"H:i" }}</small></td>
+                    <td class="fw-bold" style="color: #1e293b; font-size: 0.95rem;">
+                        {{ cl.closing_date|date:"d M Y" }}
+                        <br><small class="text-muted" style="font-size: 0.75rem;">{{ cl.submitted_at|time:"H:i" }}</small>
+                    </td>
                     <td>{{ cl.cashier.username }}</td>
                     <td class="text-end text-muted">Rp {{ cl.system_cash_total|intcomma }}</td>
                     <td class="text-end fw-bold">Rp {{ cl.actual_cash|intcomma }}</td>
@@ -63,17 +67,47 @@
                         Rp {{ cl.cash_difference|intcomma }}
                     </td>
                     <td class="text-center">
-                        {% if cl.cash_difference == 0 %}
-                            <span class="badge-glass badge-active">MATCH</span>
+                        {% if cl.is_locked %}
+                            {% if cl.cash_difference == 0 %}
+                                <span class="badge-glass badge-active">MATCH</span>
+                            {% else %}
+                                <span class="badge-glass badge-inactive">SELISIH</span>
+                            {% endif %}
                         {% else %}
-                            <span class="badge-glass badge-inactive">SELISIH</span>
+                            <span class="badge rounded-pill px-3 py-1 fw-semibold" style="background: rgba(245,158,11,0.15); color: #b45309; border: 1px solid rgba(245,158,11,0.3);">
+                                <i class="material-icons align-middle" style="font-size:14px;">lock_open</i> Terbuka
+                            </span>
                         {% endif %}
                     </td>
-                    <td class="text-muted text-truncate" style="max-width: 150px;">{{ cl.notes|default:'-' }}</td>
+                    <td class="text-muted" style="max-width: 180px;">
+                        <div class="text-truncate" style="max-width: 160px;">{{ cl.notes|default:'-' }}</div>
+                        {% if cl.unlock_count > 0 %}
+                        <small class="text-warning d-block mt-1" title="Dibuka {{ cl.unlock_count }}x — Alasan: {{ cl.unlock_reason }}">
+                            <i class="material-icons align-middle" style="font-size:12px;">history</i>
+                            Dibuka ulang {{ cl.unlock_count }}x
+                        </small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center d-print-none">
+                        {% if cl.is_locked %}
+                        <button class="btn btn-sm fw-semibold btn-unlock-closing"
+                            style="background: rgba(239,68,68,0.1); color: #dc2626; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 5px 14px; font-size: 0.78rem; white-space: nowrap;"
+                            data-id="{{ cl.id }}"
+                            data-kasir="{{ cl.cashier.username }}"
+                            data-tanggal="{{ cl.closing_date|date:'d M Y' }}"
+                            title="Buka kembali closing ini agar kasir dapat mengisi ulang">
+                            <i class="material-icons align-middle" style="font-size:15px;">lock_open</i> Buka Ulang
+                        </button>
+                        {% else %}
+                        <span class="text-muted" style="font-size:0.8rem;">
+                            <i class="material-icons align-middle" style="font-size:14px;">hourglass_empty</i> Menunggu kasir
+                        </span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <div class="empty-state">
                             <i class="material-icons">event_busy</i>
                             <p>Belum ada data closing kasir.</p>
@@ -85,20 +119,157 @@
         </table>
     </div>
 </div>
-</div>
-{% endblock %}
 
-{% block extra_js %}
+<!-- ===== MODAL: Buka Ulang Closing ===== -->
+<div class="modal fade" id="modalUnlockClosing" tabindex="-1" aria-labelledby="modalUnlockLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 25px 60px rgba(0,0,0,0.15);">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px; height:48px; border-radius:12px; background: rgba(239,68,68,0.1); display:flex; align-items:center; justify-content:center;">
+                        <i class="material-icons" style="color:#dc2626; font-size:26px;">lock_open</i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0" id="modalUnlockLabel">Buka Ulang Closing</h5>
+                        <small class="text-muted">Tindakan ini akan dicatat sebagai log audit</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <!-- Info closing yang akan dibuka -->
+                <div class="rounded-3 p-3 mb-4" style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i class="material-icons text-danger" style="font-size:18px;">warning_amber</i>
+                        <span class="fw-bold text-danger" style="font-size:0.85rem;">Peringatan</span>
+                    </div>
+                    <p class="mb-2 text-muted" style="font-size:0.88rem;">
+                        Anda akan membuka kembali closing kasir berikut:
+                    </p>
+                    <div class="fw-bold" style="font-size:0.95rem;">
+                        <i class="material-icons align-middle text-muted" style="font-size:16px;">person</i>
+                        <span id="unlock-info-kasir">—</span> &nbsp;|&nbsp;
+                        <i class="material-icons align-middle text-muted" style="font-size:16px;">calendar_today</i>
+                        <span id="unlock-info-tanggal">—</span>
+                    </div>
+                    <p class="mt-2 mb-0 text-muted" style="font-size:0.82rem;">
+                        Setelah dibuka, kasir yang bersangkutan dapat mengisi ulang dan submit kembali closing mereka.
+                    </p>
+                </div>
+
+                <!-- Input Alasan -->
+                <div class="mb-1">
+                    <label class="form-label fw-bold text-secondary mb-1">
+                        Alasan Membuka Ulang <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control saas-input" id="unlock-reason" rows="3"
+                        placeholder="Contoh: Kasir 1 diminta lanjut jaga karena kasir pengganti tidak hadir..."></textarea>
+                    <div class="text-muted mt-1" style="font-size:0.8rem;">
+                        <i class="material-icons align-middle" style="font-size:13px;">info</i>
+                        Alasan ini akan tersimpan sebagai log audit dan tidak bisa dihapus.
+                    </div>
+                </div>
+
+                <input type="hidden" id="unlock-closing-id">
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light fw-semibold px-4" data-bs-dismiss="modal">
+                    Batal
+                </button>
+                <button type="button" class="btn fw-bold px-4" id="btn-confirm-unlock"
+                    style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; box-shadow: 0 4px 12px rgba(239,68,68,0.35);">
+                    <i class="material-icons align-middle me-1" style="font-size:18px;">lock_open</i>
+                    Ya, Buka Kembali
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+(function initClosingAdmin() {
+    if (typeof jQuery === 'undefined') {
+        setTimeout(initClosingAdmin, 100);
+        return;
+    }
     (function($) {
+        // --- Search filter ---
         $("#search-closing").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#closing-table tbody tr").filter(function() {
-                if($(this).find('td').length > 1) { // exclude empty message
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                if ($(this).find('td').length > 1) {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
                 }
             });
         });
+
+        // --- Buka Ulang: Buka Modal ---
+        $(document).off('click.unlock').on('click.unlock', '.btn-unlock-closing', function() {
+            var id      = $(this).data('id');
+            var kasir   = $(this).data('kasir');
+            var tanggal = $(this).data('tanggal');
+
+            $('#unlock-closing-id').val(id);
+            $('#unlock-info-kasir').text(kasir);
+            $('#unlock-info-tanggal').text(tanggal);
+            $('#unlock-reason').val('').removeClass('is-invalid');
+
+            $('#modalUnlockClosing').modal({ backdrop: 'static', keyboard: false });
+            $('#modalUnlockClosing').modal('show');
+        });
+
+        // --- Buka Ulang: Submit ---
+        $(document).off('click.unlocksubmit').on('click.unlocksubmit', '#btn-confirm-unlock', function() {
+            var reason = $('#unlock-reason').val().trim();
+            if (!reason) {
+                $('#unlock-reason').addClass('is-invalid').focus();
+                return;
+            }
+            $('#unlock-reason').removeClass('is-invalid');
+
+            var btn = $(this);
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span> Memproses...');
+
+            $.ajax({
+                url: "{% url 'closing_unlock' %}",
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                data: {
+                    closing_id: $('#unlock-closing-id').val(),
+                    reason: reason
+                },
+                success: function(resp) {
+                    $('#modalUnlockClosing').modal('hide');
+                    if (resp.status === 'success') {
+                        Swal.fire({
+                            title: 'Berhasil Dibuka!',
+                            text: resp.message,
+                            icon: 'success',
+                            confirmButtonColor: '#6366f1',
+                            confirmButtonText: 'OK'
+                        }).then(function() {
+                            // Reload via HTMX agar tetap di dalam SPA
+                            htmx.ajax('GET', "{% url 'closing_admin' %}", { target: '#main-content', swap: 'innerHTML' });
+                        });
+                    } else {
+                        Swal.fire('Gagal', resp.message, 'error');
+                        btn.prop('disabled', false).html('<i class="material-icons align-middle me-1" style="font-size:18px;">lock_open</i> Ya, Buka Kembali');
+                    }
+                },
+                error: function() {
+                    Swal.fire('Error', 'Terjadi kesalahan sistem.', 'error');
+                    btn.prop('disabled', false).html('<i class="material-icons align-middle me-1" style="font-size:18px;">lock_open</i> Ya, Buka Kembali');
+                }
+            });
+        });
+
+        // Hapus is-invalid saat user mulai mengetik
+        $(document).off('input.unlock').on('input.unlock', '#unlock-reason', function() {
+            $(this).removeClass('is-invalid');
+        });
+
     })(jQuery);
+})()
 </script>
+
 {% endblock %}

@@ -58,7 +58,8 @@
                     </div>
                     <div class="col-md-4 form-group mb-3">
                         <label for="stock" class="control-label fw-bold text-secondary mb-1">Stok Saat Ini</label>
-                        <input type="number" name="stock" id="stock" class="form-control saas-input text-end" value="{{ product.stock|default:0 }}" required min="0">
+                        <input type="number" name="stock" id="stock" class="form-control saas-input text-end" value="{{ product.stock|default:0 }}" readonly title="Stok hanya dapat diubah melalui Barang Masuk, Penyesuaian, atau Transaksi." style="background-color: #f1f5f9;">
+                        <small class="text-muted d-block mt-1" style="font-size:0.7rem;">(Dikelola otomatis oleh sistem)</small>
                     </div>
                 </div>
             </div>
@@ -126,7 +127,9 @@
                             // Optional alert
                             showAlert('Produk berhasil ditambahkan!');
                         {% else %}
-                            location.reload();
+                            $('#uni_modal').modal('hide');
+                            htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                            setTimeout(function() { showAlert(resp.msg || 'Data berhasil disimpan.', 'success'); }, 400);
                         {% endif %}
                     } else {
                         showAlert("Terjadi kesalahan saat menyimpan data.");

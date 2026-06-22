@@ -8,7 +8,7 @@
         <p>Rekapitulasi seluruh transaksi penjualan.</p>
     </div>
     <div class="sh-actions">
-        <button class="btn btn-outline-primary" onclick="window.print()">
+        <button class="btn btn-outline-primary" onclick="printLaporanPenjualan()">
             <i class="material-icons me-1">print</i> Cetak / Ekspor PDF
         </button>
     </div>
@@ -64,8 +64,10 @@
                     <th>Tanggal & Waktu</th>
                     <th>Kasir</th>
                     <th>Metode Bayar</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">QTY</th>
                     <th class="text-end">Total Pembayaran</th>
-                    <th width="10%" class="text-center d-print-none">Detail</th>
+                    <th width="12%" class="text-center d-print-none">Aksi</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,11 +86,26 @@
                             <span class="badge-glass badge-warning">QRIS</span>
                         {% endif %}
                     </td>
-                    <td class="text-end fw-bold text-success" style="font-size: 0.95rem;">Rp {{ t.total_amount|intcomma }}</td>
+                    <td class="text-center">
+                        {% if t.status == 'success' %}
+                            <span class="badge-glass badge-active"><i class="material-icons align-middle" style="font-size:14px">check_circle</i> Berhasil</span>
+                        {% else %}
+                            <span class="badge-glass badge-inactive"><i class="material-icons align-middle" style="font-size:14px">cancel</i> Dibatalkan</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center fw-bold">{{ t.total_qty }}</td>
+                    <td class="text-end fw-bold {% if t.status == 'success' %}text-success{% else %}text-muted text-decoration-line-through{% endif %}" style="font-size: 0.95rem;">Rp {{ t.total_amount|intcomma }}</td>
                     <td class="text-center d-print-none">
-                        <button class="btn-action btn-action-view btn-detail" data-id="{{ t.id }}" title="Lihat Detail">
-                            <i class="material-icons">receipt_long</i>
-                        </button>
+                        <div class="d-flex justify-content-center gap-1">
+                            <button class="btn-action btn-action-view btn-detail" data-id="{{ t.id }}" title="Lihat Detail">
+                                <i class="material-icons">receipt_long</i>
+                            </button>
+                            {% if t.status == 'success' %}
+                            <button class="btn-action btn-action-delete btn-void" data-id="{{ t.id }}" title="Batalkan Transaksi / Retur">
+                                <i class="material-icons">settings_backup_restore</i>
+                            </button>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
                 {% empty %}
@@ -104,9 +121,16 @@
             </tbody>
             <tfoot>
                 <tr>
-                    <th colspan="5" class="text-end fw-bold">Total Pendapatan Terfilter:</th>
+                    <th colspan="6" class="text-end fw-bold">Total Diskon Terfilter:</th>
+                    <th class="text-end fw-bold fs-6 text-danger">
+                        Rp {{ total_discount|default:0|intcomma }}
+                    </th>
+                    <th class="d-print-none"></th>
+                </tr>
+                <tr>
+                    <th colspan="6" class="text-end fw-bold">Total Pendapatan Terfilter:</th>
                     <th class="text-end fw-bold fs-5 text-success">
-                        Rp {{ total_revenue|intcomma }}
+                        Rp {{ total_revenue|default:0|intcomma }}
                     </th>
                     <th class="d-print-none"></th>
                 </tr>
@@ -115,16 +139,38 @@
     </div>
 </div>
 
-<style>
-    @media print {
-        body { background: white; }
-        .sidebar, .topbar, .saas-header, .btn, .sh-actions, .d-print-none { display: none !important; }
-        .main-content { margin-left: 0 !important; padding: 0 !important; }
-        .glass-panel { border: none !important; box-shadow: none !important; }
-        table { border-collapse: collapse !important; width: 100% !important; }
-        th, td { border: 1px solid #ddd !important; padding: 8px !important; }
-    }
-</style>
+<!-- Modal Void -->
+<div class="modal fade" id="modalVoid" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 25px 60px rgba(0,0,0,0.15);">
+            <div class="modal-header border-0 pb-0">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px; height:48px; border-radius:12px; background: rgba(239,68,68,0.1); display:flex; align-items:center; justify-content:center;">
+                        <i class="material-icons" style="color:#dc2626; font-size:26px;">settings_backup_restore</i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold mb-0">Batalkan Transaksi</h5>
+                        <small class="text-muted">Aksi ini akan mengembalikan stok produk</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <input type="hidden" id="void-trx-id">
+                <p>Anda yakin ingin membatalkan <strong id="void-trx-display"></strong>?</p>
+                <div class="mb-3">
+                    <label class="form-label text-muted fw-bold">Alasan Pembatalan / Retur</label>
+                    <textarea class="form-control saas-input" id="void-reason" rows="3" placeholder="Contoh: Barang diretur pelanggan karena..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0 pb-3">
+                <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius:10px; font-weight:600;">Batal</button>
+                <button type="button" class="btn btn-danger px-4" id="btn-confirm-void" style="border-radius:10px; font-weight:600;">Ya, Batalkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
@@ -135,14 +181,175 @@
             window.uni_modal('Detail Transaksi #TRX-' + String(trxId).padStart(5, '0'), '/transactions/' + trxId + '/detail/', 'modal-lg');
         });
 
+        $('.btn-void').off("click").on("click", function() {
+            var trxId = $(this).data('id');
+            var trxNum = 'TRX-' + String(trxId).padStart(5, '0');
+            $('#void-trx-id').val(trxId);
+            $('#void-trx-display').text(trxNum);
+            $('#void-reason').val('');
+            $('#modalVoid').modal('show');
+        });
+
+        $('#btn-confirm-void').on('click', function() {
+            var trxId = $('#void-trx-id').val();
+            var reason = $('#void-reason').val().trim();
+            if (!reason) {
+                Swal.fire('Error', 'Alasan pembatalan wajib diisi', 'error');
+                return;
+            }
+            
+            $.ajax({
+                url: '/transactions/' + trxId + '/void/',
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': '{{ csrf_token }}',
+                    'reason': reason
+                },
+                success: function(resp) {
+                    if(resp.status == 'success'){
+                        $('#modalVoid').modal('hide');
+                        Swal.fire('Berhasil', resp.message, 'success').then(() => {
+                            location.reload();
+                        });
+                    }else{
+                        Swal.fire('Error', resp.message, 'error');
+                    }
+                }
+            });
+        });
+
         $("#search-sales").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#sales-table tbody tr").filter(function() {
-                if($(this).find('td').length > 1) { // exclude empty message
+                if($(this).find('td').length > 1) {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 }
             });
         });
     })(jQuery);
+
+    function printLaporanPenjualan() {
+        // Ambil data dari tabel
+        var rows = '';
+        $('#sales-table tbody tr:visible').each(function() {
+            var tds = $(this).find('td');
+            if (tds.length <= 1) return; // skip empty state row
+            var no      = tds.eq(0).text().trim();
+            var noTrx   = tds.eq(1).text().trim();
+            var tanggal = tds.eq(2).text().trim();
+            var kasir   = tds.eq(3).text().trim();
+            var metode  = tds.eq(4).text().trim();
+            var qty     = tds.eq(5).text().trim();
+            var total   = tds.eq(6).text().trim();
+            rows += '<tr>';
+            rows += '<td class="text-center">' + no + '</td>';
+            rows += '<td>' + noTrx + '</td>';
+            rows += '<td>' + tanggal + '</td>';
+            rows += '<td>' + kasir + '</td>';
+            rows += '<td class="text-center">' + metode + '</td>';
+            rows += '<td class="text-center">' + qty + '</td>';
+            rows += '<td class="text-right">' + total + '</td>';
+            rows += '</tr>';
+        });
+
+        var totalPendapatan = $('#sales-table tfoot th.text-end.fw-bold.fs-5').text().trim();
+        var periodeStart = $('input[name="start_date"]').val() || '-';
+        var periodeEnd   = $('input[name="end_date"]').val() || '-';
+        var now = new Date();
+        var printDate = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+        var printTime = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+
+        var html = '<!DOCTYPE html><html lang="id"><head>';
+        html += '<meta charset="UTF-8">';
+        html += '<title>Laporan Penjualan - DD Shoes POS</title>';
+        html += '<style>';
+        html += '* { margin: 0; padding: 0; box-sizing: border-box; }';
+        html += 'body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; background: #fff; }';
+        html += '.print-wrap { width: 100%; max-width: 900px; margin: 0 auto; padding: 20px; }';
+        html += '.kop { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; }';
+        html += '.kop h1 { font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }';
+        html += '.kop h2 { font-size: 12pt; font-weight: normal; margin-top: 4px; }';
+        html += '.kop p { font-size: 9pt; color: #444; margin-top: 4px; }';
+        html += '.info-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 10pt; }';
+        html += '.info-row span { display: block; }';
+        html += 'table { width: 100%; border-collapse: collapse; margin-top: 12px; }';
+        html += 'thead th { background: #1e293b; color: #fff; padding: 8px 10px; text-align: left; font-size: 10pt; border: 1px solid #1e293b; }';
+        html += 'thead th.text-center { text-align: center; }';
+        html += 'thead th.text-right { text-align: right; }';
+        html += 'tbody tr:nth-child(even) { background: #f8fafc; }';
+        html += 'tbody td { padding: 7px 10px; border: 1px solid #cbd5e1; font-size: 10pt; vertical-align: middle; }';
+        html += 'tbody td.text-center { text-align: center; }';
+        html += 'tbody td.text-right { text-align: right; }';
+        html += 'tfoot td { padding: 8px 10px; border: 1px solid #1e293b; font-weight: bold; font-size: 11pt; background: #f1f5f9; }';
+        html += 'tfoot td.text-right { text-align: right; color: #16a34a; }';
+        html += '.footer-note { margin-top: 30px; font-size: 9pt; color: #64748b; text-align: right; }';
+        html += '.ttd-area { display: flex; justify-content: flex-end; margin-top: 40px; font-size: 10pt; }';
+        html += '.ttd-box { text-align: center; }';
+        html += '.ttd-line { margin-top: 60px; border-top: 1px solid #000; padding-top: 4px; width: 180px; }';
+        html += '@media print { body { margin: 0; } .print-wrap { padding: 10px; } }';
+        html += '</style></head><body>';
+        html += '<div class="print-wrap">';
+
+        // Kop laporan
+        html += '<div class="kop">';
+        html += '<h1>DD Shoes POS System</h1>';
+        html += '<h2>Laporan Penjualan</h2>';
+        html += '<p>Jl. [Alamat Toko] &nbsp;|&nbsp; Telp: [No. Telepon]</p>';
+        html += '</div>';
+
+        // Info periode
+        html += '<div class="info-row">';
+        html += '<div><span><strong>Periode:</strong> ' + periodeStart + ' s/d ' + periodeEnd + '</span></div>';
+        html += '<div style="text-align:right"><span>Dicetak: ' + printDate + ', pukul ' + printTime + '</span></div>';
+        html += '</div>';
+
+        // Tabel
+        html += '<table>';
+        html += '<thead><tr>';
+        html += '<th class="text-center" style="width:5%">No</th>';
+        html += '<th style="width:15%">No. Transaksi</th>';
+        html += '<th style="width:20%">Tanggal &amp; Waktu</th>';
+        html += '<th style="width:15%">Kasir</th>';
+        html += '<th class="text-center" style="width:15%">Metode Bayar</th>';
+        html += '<th class="text-center" style="width:10%">QTY</th>';
+        html += '<th class="text-right" style="width:20%">Total Pembayaran</th>';
+        html += '</tr></thead>';
+        html += '<tbody>';
+        if (rows === '') {
+            html += '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">Tidak ada data transaksi.</td></tr>';
+        } else {
+            html += rows;
+        }
+        html += '</tbody>';
+        html += '<tfoot>';
+        html += '<tr>';
+        html += '<td colspan="6">Total Diskon</td>';
+        html += '<td class="text-right" style="color: #ef4444;">' + $('#sales-table tfoot th.text-end.fw-bold.fs-6').text().trim() + '</td>';
+        html += '</tr>';
+        html += '<tr>';
+        html += '<td colspan="6">Total Pendapatan</td>';
+        html += '<td class="text-right">' + totalPendapatan + '</td>';
+        html += '</tr>';
+        html += '</tfoot>';
+        html += '</table>';
+
+        // Tanda tangan
+        html += '<div class="ttd-area">';
+        html += '<div class="ttd-box">';
+        html += '<p>' + printDate + '</p>';
+        html += '<p>Mengetahui,</p>';
+        html += '<div class="ttd-line">( Admin / Pimpinan )</div>';
+        html += '</div>';
+        html += '</div>';
+
+        html += '<div class="footer-note">* Laporan ini digenerate secara otomatis oleh sistem DD Shoes POS</div>';
+        html += '</div></body></html>';
+
+        var printWin = window.open('', '_blank', 'width=960,height=700');
+        printWin.document.write(html);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(function() { printWin.print(); }, 500);
+    }
 </script>
 {% endblock %}

@@ -113,6 +113,21 @@
   - [x] Filter tabs Harian/Mingguan/Bulanan (AJAX update chart)
   - [x] Tabel 5 produk terlaris
   - [x] Tabel stok kritis (dengan badge warning)
+- [x] Fase 15 — Perombakan Dashboard Bisnis Barang Bekas | `[x]` | Selesai |
+
+### Breakdown Fase 15
+- [x] **Update Backend (`views.py`)**
+  - [x] Hapus query `low_stock_products` & `top_products`.
+  - [x] Tambahkan query `top_brands` (Merek terlaris).
+  - [x] Tambahkan query `dead_stock` (Barang lama belum laku).
+  - [x] Modifikasi `dashboard_chart_data` untuk menghitung `total_sold`, `total_revenue`, `start_date`, dan `end_date` sesuai filter.
+- [x] **Update Frontend (`dashboard.html`)**
+  - [x] Hapus baris *Quick Actions* (Buka Kasir, Barang Masuk, dll).
+  - [x] Ubah desain panel "Produk Terlaris" menjadi "Top 5 Brand Terlaris".
+  - [x] Ubah desain panel "Stok Kritis" menjadi "Barang Lama (Dead Stock)" beserta tampilan durasi barang mengendap.
+  - [x] Buat kartu "Terjual" dan "Pendapatan" menjadi *clickable* (dibungkus tag `<a>`).
+  - [x] Tambahkan script AJAX untuk meng-update angka dan label judul kartu.
+  - [x] Pastikan link `href` diperbarui secara dinamis mengarah ke Laporan Penjualan.
 - [x] Endpoint AJAX untuk update data chart berdasarkan filter periode
 
 ### 3.2 Master Data — Merek (Brands)
@@ -691,6 +706,17 @@ Tombol hapus di beberapa halaman langsung mengeksekusi penghapusan tanpa konfirm
 
 | Fase 11 — POS HTMX Loading Bug | `[x]` | Selesai |
 | Fase 12 — Bypass HTMX Halaman POS | `[x]` | Selesai |
+| Fase 13 — Standarisasi & Bug Fix POS | `[x]` | Selesai |
+
+### Breakdown Fase 13 (Standarisasi POS)
+- [x] **Data & Keamanan**
+  - [x] Implementasi `select_for_update()` di `views.py` (Mencegah Stok Minus)
+  - [x] Auto-update `buy_price` produk saat ada stok masuk baru (HPP Last In)
+- [x] **UI & Alert**
+  - [x] Tambahkan SweetAlert (`Swal.fire`) saat hapus keranjang & kosongkan keranjang di POS
+  - [x] Rombak ikon Sidebar dan Halaman agar sesuai Best Practice Material Icons
+- [x] **Fitur Pencarian**
+  - [x] Verifikasi dan aktifkan *Search Realtime* (JS) pada semua halaman Master Data
 
 ---
 

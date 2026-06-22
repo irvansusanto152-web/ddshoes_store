@@ -8,25 +8,39 @@
         <p>Kelola data barang atau inventaris sepatu.</p>
     </div>
     <div class="sh-actions">
-        <button class="btn btn-primary btn-masuk" id="btn-add-product">
-            <i class="material-icons me-1">add</i> Tambah Produk
-        </button>
+        <!-- Add Product removed to enforce flow via Stock In -->
     </div>
 </div>
 
 <div class="glass-panel">
     <div class="saas-toolbar mb-3">
-        <div class="row w-100">
-            <div class="col-md-6 mb-2 mb-md-0">
+        <div class="row w-100 g-2">
+            <div class="col-md-4 mb-2 mb-md-0">
                 <div class="st-search" style="position: relative;">
                     <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
-                    <input type="text" id="search-product" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari nama, merek, atau ukuran...">
+                    <input type="text" id="search-product" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari nama, kode, atau ukuran...">
                 </div>
             </div>
             <div class="col-md-3">
+                <select id="filter-brand" class="form-select saas-input">
+                    <option value="">Semua Merek</option>
+                    {% for b in brands %}
+                    <option value="{{ b.name|lower }}">{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select id="filter-category" class="form-select saas-input">
+                    <option value="">Semua Kategori</option>
+                    {% for c in categories %}
+                    <option value="{{ c.name|lower }}">{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
                 <select id="filter-status" class="form-select saas-input">
                     <option value="">Semua Status</option>
-                    <option value="Active">Aktif</option>
+                    <option value="Active" selected>Aktif</option>
                     <option value="Inactive">Nonaktif</option>
                 </select>
             </div>
@@ -50,7 +64,7 @@
             </thead>
             <tbody>
                 {% for p in products %}
-                <tr>
+                <tr data-brand="{{ p.brand.name|lower }}" data-category="{{ p.category.name|lower }}">
                     <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
                     <td>
                         <div style="width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #f1f5f9; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
@@ -64,6 +78,7 @@
                     <td>
                         <h6 class="mb-1 fw-bold" style="color: #1e293b; font-size: 0.95rem;">{{ p.name }}</h6>
                         <small class="text-muted d-block" style="font-size: 0.75rem;">{{ p.brand.name }} &bull; {{ p.category.name }} &bull; Size {{ p.size }}</small>
+                        <small class="text-muted d-block" style="font-size: 0.7rem; font-family: monospace; color: #6366f1 !important;">{{ p.product_code|default:"-" }}</small>
                     </td>
                     <td><span class="badge-glass badge-dark">{{ p.condition }}</span></td>
                     <td class="text-end text-muted"><small style="font-size: 0.8rem;">Rp {{ p.buy_price|intcomma }}</small></td>
@@ -83,15 +98,18 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ p.id }}" title="Toggle Status">
+                        {% if p.status == 'active' %}
+                        <button class="btn-action btn-action-warning me-1 btn-toggle-status" data-id="{{ p.id }}" title="Nonaktifkan">
                             <i class="material-icons">toggle_on</i>
                         </button>
                         <button class="btn-action btn-action-edit me-1 btn-edit-product" data-id="{{ p.id }}" title="Edit">
                             <i class="material-icons">edit_note</i>
                         </button>
-                        <button class="btn-action btn-action-delete btn-delete-product" data-id="{{ p.id }}" title="Hapus">
-                            <i class="material-icons">delete_outline</i>
+                        {% else %}
+                        <button class="btn-action btn-action-secondary me-1" title="Terkunci (Terjual)" disabled style="opacity: 0.5; cursor: not-allowed; border: 1px solid #e2e8f0; background: #f8fafc; color: #94a3b8;">
+                            <i class="material-icons">lock</i>
                         </button>
+                        {% endif %}
                     </td>
                 </tr>
                 {% empty %}
@@ -114,26 +132,56 @@
 <script>
     (function($) {
         // Search
-        $("#search-product").off("keyup").on("keyup", function() {
+        var searchInput = $("#search-product");
+        var initialSearch = "{{ request.GET.search|default:'' }}";
+        if(initialSearch) {
+            searchInput.val(initialSearch);
+        }
+        
+        setTimeout(filterTable, 100);
+
+        searchInput.off("keyup").on("keyup", function() {
             filterTable();
         });
 
-        $("#filter-status").off("change").on("change", function() {
+        $("#filter-status, #filter-brand, #filter-category").off("change").on("change", function() {
             filterTable();
         });
 
         function filterTable() {
             var searchVal = $("#search-product").val().toLowerCase();
             var statusVal = $("#filter-status").val().toLowerCase();
+            var brandVal = $("#filter-brand").val();
+            var catVal = $("#filter-category").val();
 
             $("#product-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
                     var textMatch = $(this).text().toLowerCase().indexOf(searchVal) > -1;
+                    
                     var statusMatch = true;
                     if(statusVal) {
                         statusMatch = $(this).find('td:eq(7)').text().trim().toLowerCase() === statusVal;
                     }
-                    $(this).toggle(textMatch && statusMatch);
+                    
+                    var brandMatch = true;
+                    if(brandVal) {
+                        brandMatch = $(this).data('brand') === brandVal;
+                    }
+
+                    var catMatch = true;
+                    if(catVal) {
+                        catMatch = $(this).data('category') === catVal;
+                    }
+
+                    $(this).toggle(textMatch && statusMatch && brandMatch && catMatch);
+                }
+            });
+
+            // Update visible row numbers
+            var visibleIndex = 1;
+            $("#product-table tbody tr").each(function() {
+                if($(this).find('td').length > 1 && $(this).css('display') !== 'none') {
+                    $(this).find('td:eq(0)').text(visibleIndex++);
                 }
             });
         }
@@ -164,6 +212,7 @@
                 success: function(resp) {
                     if(resp.status == 'success') {
                         htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Status berhasil diubah.', 'success'); }, 400);
                     } else {
                         showAlert("Gagal merubah status.");
                         end_loader();
@@ -182,6 +231,7 @@
                 success: function(resp) {
                     if(resp.status == 'success') {
                         htmx.ajax('GET', window.location.href, {target: '#main-content'});
+                        setTimeout(function() { showAlert(resp.msg || 'Data berhasil dihapus.', 'success'); }, 400);
                     } else {
                         showAlert("Gagal menghapus data.");
                         end_loader();

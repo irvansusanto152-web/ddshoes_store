@@ -1,0 +1,124 @@
+<form id="adjustment-form" method="POST" action="{% url 'adjustment_save' %}">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label fw-bold text-dark">Produk <span class="text-danger">*</span></label>
+        <select name="product_id" id="adj-product" class="form-select saas-input select2" required>
+            <option value="">-- Pilih Produk (hanya yg ada stok) --</option>
+            {% for p in products %}
+            <option value="{{ p.id }}" data-stock="{{ p.stock }}">
+                {{ p.name }} - Uk.{{ p.size }} | {{ p.brand.name }} | Stok: {{ p.stock }}
+            </option>
+            {% empty %}
+            <option disabled>Tidak ada produk dengan stok tersedia.</option>
+            {% endfor %}
+        </select>
+        <div class="form-text text-muted">Hanya menampilkan produk yang stoknya masih tersedia (> 0).</div>
+    </div>
+
+    <!-- Info stok saat ini -->
+    <div id="stock-info-box" class="mb-3" style="display:none;">
+        <div class="p-3 rounded-3" style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); border: 1px solid #bae6fd;">
+            <div class="d-flex align-items-center gap-2">
+                <i class="material-icons text-info">inventory</i>
+                <div>
+                    <div class="text-muted" style="font-size:0.8rem;">Stok saat ini</div>
+                    <div class="fw-bold text-dark" id="current-stock-display" style="font-size: 1.1rem;">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-dark">Jumlah Dikurangi <span class="text-danger">*</span></label>
+            <input type="number" name="quantity" id="adj-quantity" class="form-control saas-input" 
+                   min="1" placeholder="Masukkan jumlah (maks: stok tersedia)" required>
+            <div class="form-text text-danger fw-bold" id="qty-warning" style="display:none;"></div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-bold text-dark">Alasan <span class="text-danger">*</span></label>
+            <select name="reason" class="form-select saas-input" required>
+                <option value="">-- Pilih Alasan --</option>
+                <option value="rusak">🔴 Rusak / Cacat</option>
+                <option value="hilang">🟡 Hilang</option>
+                <option value="retur">🟣 Retur ke Supplier</option>
+                <option value="lainnya">⚫ Lainnya</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <label class="form-label fw-bold text-dark">Catatan <span class="text-muted fw-normal">(opsional)</span></label>
+        <textarea name="notes" class="form-control saas-input" rows="3" 
+                  placeholder="Contoh: Sepatu Nike Zoo ditemukan sol terlepas saat pengecekan barang masuk tanggal 20 Jun 2025"></textarea>
+    </div>
+
+    <!-- Peringatan -->
+    <div class="alert d-flex align-items-center mt-3 rounded-3 border-0" style="background: rgba(239,68,68,0.07); color: #991b1b; font-size: 0.87rem;">
+        <i class="material-icons me-2" style="font-size:18px; color:#dc2626;">warning</i>
+        <div>Penyesuaian <strong>tidak dapat dibatalkan/dihapus</strong>. Pastikan data sudah benar sebelum menyimpan.</div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2 justify-content-end">
+        <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+        <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+            <i class="material-icons me-1" style="font-size:16px; vertical-align:middle;">tune</i> Simpan Penyesuaian
+        </button>
+    </div>
+</form>
+
+<script>
+(function($) {
+    // Saat produk dipilih, tampilkan stok saat ini
+    $('#adj-product').on('change', function() {
+        var selected = $(this).find('option:selected');
+        var stock = selected.data('stock');
+        if (stock !== undefined && stock !== '') {
+            $('#stock-info-box').show();
+            $('#current-stock-display').text(stock + ' unit');
+            $('#adj-quantity').attr('max', stock);
+        } else {
+            $('#stock-info-box').hide();
+        }
+        $('#adj-quantity').val('');
+        $('#qty-warning').hide();
+    });
+
+    // Validasi jumlah real-time
+    $('#adj-quantity').on('input', function() {
+        var val = parseInt($(this).val());
+        var maxStock = parseInt($('#adj-product').find('option:selected').data('stock'));
+        if (val > maxStock) {
+            $('#qty-warning').show().text('⚠ Jumlah melebihi stok yang tersedia (' + maxStock + ' unit)!');
+        } else {
+            $('#qty-warning').hide();
+        }
+    });
+
+    // Submit form via AJAX
+    $('#adjustment-form').off('submit').on('submit', function(e) {
+        e.preventDefault();
+        var qty = parseInt($('#adj-quantity').val());
+        var maxStock = parseInt($('#adj-product').find('option:selected').data('stock'));
+        if (qty > maxStock) {
+            showAlert('Jumlah melebihi stok yang tersedia!', 'danger');
+            return;
+        }
+
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: $(this).serialize(),
+            success: function(resp) {
+                if (resp.status === 'success') {
+                    $('#uni_modal').modal('hide');
+                    showAlert(resp.msg, 'success');
+                    setTimeout(function() { location.reload(); }, 1500);
+                } else {
+                    showAlert(resp.msg, 'danger');
+                }
+            }
+        });
+    });
+})(jQuery);
+</script>

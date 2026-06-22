@@ -1,0 +1,57 @@
+<tr>
+    <td>
+        <input type="text" name="product_name[]" class="form-control saas-input"
+               placeholder="cth: Nike Air Force 1" required
+               style="font-size:0.85rem;">
+    </td>
+    <td>
+        <select name="brand_id[]" class="form-select saas-input select2-brand" required style="font-size:0.85rem;">
+            <option value="" disabled selected>-- Pilih --</option>
+            {% for b in brands %}
+            <option value="{{ b.id }}">{{ b.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <select name="category_id[]" class="form-select saas-input select2-category" required style="font-size:0.85rem;">
+            <option value="" disabled selected>-- Pilih --</option>
+            {% for c in categories %}
+            <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <input type="text" name="size[]" class="form-control saas-input text-center"
+               placeholder="42" required maxlength="10"
+               style="font-size:0.85rem;">
+    </td>
+    <td>
+        <select name="condition[]" class="form-select saas-input" required style="font-size:0.85rem;">
+            <option value="" disabled selected>-- Pilih --</option>
+            {% for val, label in conditions %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+        </select>
+    </td>
+    <td>
+        <input type="number" name="buy_price[]" class="form-control saas-input"
+               placeholder="150000" min="0" required
+               style="font-size:0.85rem;">
+    </td>
+    <td>
+        <input type="number" name="sell_price[]" class="form-control saas-input"
+               placeholder="200000" min="0" required
+               style="font-size:0.85rem;">
+    </td>
+    <td>
+        <input type="number" name="quantity[]" class="form-control saas-input text-center"
+               min="1" value="1" required
+               style="font-size:0.85rem; padding: 0.375rem 0.5rem;">
+    </td>
+    <td class="text-center">
+        <button type="button" class="btn btn-sm btn-danger btn-remove-row" tabindex="-1"
+                title="Hapus baris">
+            <i class="material-icons" style="font-size:16px;">delete</i>
+        </button>
+    </td>
+</tr>

@@ -2,6 +2,38 @@
 {% load humanize %}
 {% block title %}Kasir - Point of Sale{% endblock %}
 {% block pageContent %}
+<style>
+    .pay-btn-label {
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        background: rgba(255,255,255,0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-check:checked + .pay-btn-label {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        border-color: #60a5fa !important;
+        color: white !important;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        transform: scale(1.05);
+    }
+    @keyframes inputBounce {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); color: #34d399 !important; }
+        100% { transform: scale(1); }
+    }
+    .animate-bounce {
+        animation: inputBounce 0.3s ease-out;
+    }
+    @keyframes btnClickEffect {
+        0% { transform: scale(1); background: rgba(255,255,255,0.05); }
+        50% { transform: scale(0.92); background: rgba(59, 130, 246, 0.6) !important; border-color: #60a5fa !important; color: white !important; }
+        100% { transform: scale(1); background: rgba(255,255,255,0.05); }
+    }
+    .animate-btn-click {
+        animation: btnClickEffect 0.2s ease-out;
+    }
+</style>
 <div class="row g-3 h-100 pos-container" style="min-height: 80vh;">
     
     <!-- LEFT PANEL: CATALOG -->
@@ -10,7 +42,7 @@
             <div class="d-flex gap-2 mb-3">
                 <div class="position-relative flex-grow-1">
                     <i class="material-icons position-absolute" style="left: 16px; top: 12px; color: #94a3b8;">search</i>
-                    <input type="text" id="pos-search" class="form-control saas-input ps-5" placeholder="Cari nama sepatu, merek, ukuran..." autocomplete="off" style="border-radius: 50px; background: rgba(255,255,255,0.8);">
+                    <input type="text" id="pos-search" class="form-control saas-input ps-5" placeholder="Cari nama, kode produk, merek, ukuran..." autocomplete="off" style="border-radius: 50px; background: rgba(255,255,255,0.8);">
                 </div>
                 <select id="pos-brand" class="form-select saas-input" style="width: auto; min-width: 180px; border-radius: 50px; background: rgba(255,255,255,0.8);">
                     <option value="">Semua Merek</option>
@@ -60,7 +92,21 @@
 
             <!-- PAYMENT SECTION -->
             <div class="p-3" style="background-color: #0f172a; border-top: 1px solid rgba(255,255,255,0.1);">
-                <div class="d-flex justify-content-between mb-3 align-items-center">
+                <div class="d-flex justify-content-between mb-2 align-items-center">
+                    <span class="text-white-50">Subtotal</span>
+                    <h6 class="mb-0 text-white" id="cart-subtotal-display">Rp 0</h6>
+                </div>
+                <div class="d-flex justify-content-between mb-3 align-items-center gap-2">
+                    <span class="text-white-50 flex-shrink-0">Diskon</span>
+                    <div class="input-group input-group-sm" style="max-width: 150px; border-radius: 8px; overflow: hidden;">
+                        <select class="form-select border-0 shadow-none text-white fw-bold" id="discount-type" style="max-width: 60px; padding: 4px 8px; background: rgba(255,255,255,0.15); cursor: pointer;">
+                            <option value="percent" class="text-dark">%</option>
+                            <option value="nominal" class="text-dark">Rp</option>
+                        </select>
+                        <input type="number" class="form-control border-0 shadow-none text-end fw-bold" id="discount-input" placeholder="0" min="0" style="background: rgba(255,255,255,0.08); color: #fff;">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mb-3 align-items-center pt-2 border-top border-secondary">
                     <span class="text-white-50 fw-bold">Total Pembayaran</span>
                     <h2 class="fw-bold mb-0" id="cart-total-display" style="color: #34d399;">Rp 0</h2>
                 </div>
@@ -69,13 +115,13 @@
                     <label class="form-label fw-bold mb-2" style="color: #cbd5e1; font-size: 0.85rem;">METODE PEMBAYARAN</label>
                     <div class="d-flex gap-2 w-100 mb-3" role="group">
                         <input type="radio" class="btn-check payment-method" name="payment_method" id="pay-tunai" value="tunai" checked>
-                        <label class="btn flex-grow-1" for="pay-tunai" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: white; background: rgba(255,255,255,0.05);">Tunai</label>
+                        <label class="btn flex-grow-1 pay-btn-label" for="pay-tunai">Tunai</label>
 
                         <input type="radio" class="btn-check payment-method" name="payment_method" id="pay-transfer" value="transfer_bri">
-                        <label class="btn flex-grow-1" for="pay-transfer" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: white; background: rgba(255,255,255,0.05);">Transfer</label>
+                        <label class="btn flex-grow-1 pay-btn-label" for="pay-transfer">Transfer</label>
 
                         <input type="radio" class="btn-check payment-method" name="payment_method" id="pay-qris" value="qris">
-                        <label class="btn flex-grow-1" for="pay-qris" style="border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); color: white; background: rgba(255,255,255,0.05);">QRIS</label>
+                        <label class="btn flex-grow-1 pay-btn-label" for="pay-qris">QRIS</label>
                     </div>
 
                     <div id="cash-input-section" class="p-3 rounded-3 mb-3" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);">
@@ -83,6 +129,13 @@
                         <div class="input-group mb-2">
                             <span class="input-group-text border-0 text-white-50 fw-bold" style="background: rgba(255,255,255,0.1);">Rp</span>
                             <input type="number" class="form-control border-0 fs-5 fw-bold text-white shadow-none" id="cash-received" placeholder="0" style="background: rgba(255,255,255,0.1);">
+                        </div>
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <button class="btn btn-sm btn-quick-cash" data-amount="pas" style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); flex: 1;">Uang Pas</button>
+                            <button class="btn btn-sm btn-quick-cash" data-amount="10000" style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); flex: 1;">10k</button>
+                            <button class="btn btn-sm btn-quick-cash" data-amount="20000" style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); flex: 1;">20k</button>
+                            <button class="btn btn-sm btn-quick-cash" data-amount="50000" style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); flex: 1;">50k</button>
+                            <button class="btn btn-sm btn-quick-cash" data-amount="100000" style="background: rgba(255,255,255,0.05); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); flex: 1;">100k</button>
                         </div>
                         <div class="d-flex justify-content-between mt-2 pt-2 border-top border-secondary d-none" id="change-section">
                             <span class="text-white-50">Kembalian:</span>
@@ -148,8 +201,10 @@
                         <tbody></tbody>
                     </table>
                     <div class="rt-summary">
-                        <div><span>Total</span><span id="r-total"></span></div>
-                        <div><span>Metode</span><span id="r-method"></span></div>
+                        <div><span>Subtotal</span><span id="r-subtotal"></span></div>
+                        <div id="r-discount-row"><span>Diskon</span><span id="r-discount"></span></div>
+                        <div><span>Total Bayar</span><span id="r-total"></span></div>
+                        <div style="border-top:1px solid #eee; margin-top:3px; padding-top:3px;"><span>Metode</span><span id="r-method"></span></div>
                         <div id="r-received-row"><span>Tunai</span><span id="r-received"></span></div>
                         <div id="r-change-row"><span>Kembali</span><span id="r-change"></span></div>
                     </div>
@@ -219,6 +274,7 @@
                             </div>
                         </div>
                         <div class="card-body p-3 d-flex flex-column">
+                            <span style="font-size:0.65rem; font-family:monospace; color:#6366f1; font-weight:700; letter-spacing:0.05em;">${p.product_code}</span>
                             <h6 class="fw-bold mb-1 text-truncate" style="font-size:0.95rem; color:#1e293b;" title="${p.name}">${p.name}</h6>
                             <div class="d-flex align-items-center gap-1 mb-2">
                                 <span class="badge bg-light text-dark border" style="font-size:0.65rem;">${p.condition}</span>
@@ -268,6 +324,7 @@
                     <p class="mt-2">Keranjang masih kosong</p>
                 </div>
             `);
+            $('#cart-subtotal-display').text('Rp 0');
             $('#cart-total-display').text('Rp 0');
             $('#btn-process-payment').prop('disabled', true);
             calculateChange();
@@ -278,28 +335,28 @@
             let subtotal = item.qty * item.price;
             total += subtotal;
             html += `
-            <div class="bg-white p-2 rounded border shadow-sm mb-2 d-flex align-items-center">
-                <div class="flex-grow-1">
-                    <h6 class="fw-bold mb-0 text-truncate" style="max-width: 180px;">${item.name}</h6>
-                    <small class="text-muted">${formatMoney(item.price)}</small>
+            <div class="bg-white p-2 rounded border shadow-sm mb-2 d-flex align-items-center gap-2">
+                <div class="flex-grow-1 overflow-hidden">
+                    <h6 class="fw-bold mb-0 text-truncate" style="color: #1e293b; font-size: 0.9rem;">${item.name}</h6>
+                    <small style="color: #64748b; font-size: 0.75rem;">${formatMoney(item.price)}</small>
                 </div>
-                <div class="d-flex align-items-center mx-2">
-                    <button class="btn btn-sm btn-light border p-0" style="width:24px;height:24px;" onclick="updateCartQty(${index}, -1)">-</button>
-                    <input type="text" class="form-control form-control-sm text-center border-0 fw-bold px-1" value="${item.qty}" readonly style="width:30px; background:transparent;">
-                    <button class="btn btn-sm btn-light border p-0" style="width:24px;height:24px;" onclick="updateCartQty(${index}, 1)">+</button>
+                <div class="d-flex align-items-center flex-shrink-0">
+                    <button class="btn btn-sm btn-light border p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;" onclick="updateCartQty(${index}, -1)"><i class="material-icons" style="font-size:14px;">remove</i></button>
+                    <input type="text" class="form-control form-control-sm text-center border-0 fw-bold px-0" value="${item.qty}" readonly style="width:28px; background:transparent;">
+                    <button class="btn btn-sm btn-light border p-0 d-flex align-items-center justify-content-center" style="width:24px;height:24px;" onclick="updateCartQty(${index}, 1)"><i class="material-icons" style="font-size:14px;">add</i></button>
                 </div>
-                <div class="text-end me-2" style="min-width: 70px;">
-                    <span class="fw-bold text-success">${formatMoney(subtotal)}</span>
+                <div class="text-end flex-shrink-0">
+                    <span class="fw-bold text-success" style="font-size: 0.9rem; white-space: nowrap;">${formatMoney(subtotal)}</span>
                 </div>
-                <button class="btn btn-sm btn-outline-danger p-1" onclick="removeFromCart(${index})"><i class="material-icons" style="font-size:16px;">delete</i></button>
+                <button class="btn btn-sm btn-outline-danger p-1 d-flex align-items-center justify-content-center flex-shrink-0" style="width:28px;height:28px;" onclick="removeFromCart(${index})"><i class="material-icons" style="font-size:16px;">delete</i></button>
             </div>
             `;
         });
 
         $('#cart-items-container').html(html);
-        $('#cart-total-display').text(formatMoney(total));
+        $('#cart-subtotal-display').text(formatMoney(total));
+        calculateChange(); // This will calculate discount and final total
         $('#btn-process-payment').prop('disabled', false);
-        calculateChange();
     }
 
     function updateCartQty(index, delta) {
@@ -314,22 +371,54 @@
     }
 
     function removeFromCart(index) {
-        cart.splice(index, 1);
-        renderCart();
+        Swal.fire({
+            title: 'Hapus Item?',
+            text: "Item ini akan dihapus dari keranjang.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#94a3b8',
+            confirmButtonText: 'Ya, Hapus',
+            cancelButtonText: 'Batal',
+            reverseButtons: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                cart.splice(index, 1);
+                renderCart();
+            }
+        });
     }
 
     function getCartTotal() {
         return cart.reduce((sum, item) => sum + (item.qty * item.price), 0);
     }
 
+    function getDiscountAmount(subtotal) {
+        let type = $('#discount-type').val();
+        let val = parseFloat($('#discount-input').val()) || 0;
+        if(val <= 0) return 0;
+        
+        if(type === 'percent') {
+            if(val > 100) val = 100;
+            return Math.floor(subtotal * (val / 100));
+        } else {
+            return val > subtotal ? subtotal : val;
+        }
+    }
+
     function calculateChange() {
         let method = $('input[name="payment_method"]:checked').val();
-        let total = getCartTotal();
+        let subtotal = getCartTotal();
+        let discount = getDiscountAmount(subtotal);
+        let finalTotal = subtotal - discount;
+        
+        $('#cart-total-display').text(formatMoney(finalTotal));
+
         let received = parseInt($('#cash-received').val()) || 0;
 
-        if(method === 'tunai' && total > 0) {
+        if(method === 'tunai' && finalTotal > 0) {
             $('#change-section').removeClass('d-none');
-            let change = received - total;
+            let change = received - finalTotal;
             if(change >= 0) {
                 $('#change-display').text(formatMoney(change)).removeClass('text-danger').addClass('text-success');
                 $('#btn-process-payment').prop('disabled', false);
@@ -339,7 +428,7 @@
             }
         } else {
             $('#change-section').addClass('d-none');
-            if(total > 0) $('#btn-process-payment').prop('disabled', false);
+            if(finalTotal > 0) $('#btn-process-payment').prop('disabled', false);
         }
     }
 
@@ -379,11 +468,62 @@
             calculateChange();
         });
 
-        $('#btn-clear-cart').off("click").on("click", function() {
-            if(confirm("Kosongkan keranjang?")) {
-                cart = [];
-                renderCart();
+        $('#discount-input').off("keyup change").on("keyup change", function() {
+            calculateChange();
+        });
+
+        $('#discount-type').off("change").on("change", function() {
+            calculateChange();
+        });
+
+        // Quick Cash Logic
+        $('.btn-quick-cash').off("click").on("click", function() {
+            let $btn = $(this);
+            let amount = $btn.data('amount');
+            let $input = $('#cash-received');
+            
+            // Add button animation
+            $btn.addClass('animate-btn-click');
+            setTimeout(() => {
+                $btn.removeClass('animate-btn-click');
+            }, 200);
+
+            if(amount === 'pas') {
+                let subtotal = getCartTotal();
+                let discount = getDiscountAmount(subtotal);
+                $input.val(subtotal - discount);
+            } else {
+                let currentVal = parseInt($input.val()) || 0;
+                $input.val(currentVal + parseInt(amount));
             }
+            
+            // Add animation to input
+            $input.addClass('animate-bounce');
+            setTimeout(() => {
+                $input.removeClass('animate-bounce');
+            }, 300);
+            
+            calculateChange();
+        });
+
+        $('#btn-clear-cart').off("click").on("click", function() {
+            if (cart.length === 0) return;
+            Swal.fire({
+                title: 'Kosongkan Keranjang?',
+                text: "Semua item di keranjang akan dihapus.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'Ya, Kosongkan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    cart = [];
+                    renderCart();
+                }
+            });
         });
 
         // Process Payment
@@ -396,7 +536,9 @@
             let data = {
                 items: cart,
                 payment_method: $('input[name="payment_method"]:checked').val(),
-                cash_received: $('#cash-received').val() || 0
+                cash_received: $('#cash-received').val() || 0,
+                discount_type: $('#discount-type').val(),
+                discount_value: $('#discount-input').val() || 0
             };
 
             $.ajax({
@@ -418,7 +560,7 @@
                         r.items.forEach(i => {
                             tbody += `
                             <tr>
-                                <td>${i.name}<br><small>Size: ${i.size}</small></td>
+                                <td>${i.name}<br><small>Size: ${i.size} | ${i.product_code || ''}</small></td>
                                 <td class="text-right">${i.qty}</td>
                                 <td class="text-right">${(i.price/1000)}k</td>
                                 <td class="text-right">${(i.subtotal/1000)}k</td>
@@ -427,6 +569,13 @@
                         });
                         $('#r-items tbody').html(tbody);
                         
+                        $('#r-subtotal').text(formatMoney(r.subtotal));
+                        if(r.discount > 0) {
+                            $('#r-discount-row').show();
+                            $('#r-discount').text("-" + formatMoney(r.discount));
+                        } else {
+                            $('#r-discount-row').hide();
+                        }
                         $('#r-total').text(formatMoney(r.total));
                         $('#r-method').text(r.method);
                         

@@ -8,7 +8,7 @@
         <p>Pantau stok barang saat ini beserta valuasi modal dan potensi pendapatan.</p>
     </div>
     <div class="sh-actions">
-        <button class="btn btn-outline-primary" onclick="window.print()">
+        <button class="btn btn-outline-primary" onclick="printLaporanInventory()">
             <i class="material-icons me-1">print</i> Cetak Laporan
         </button>
     </div>
@@ -115,29 +115,139 @@
     </div>
 </div>
 
-<style>
-    @media print {
-        body { background: white; }
-        .sidebar, .topbar, .saas-header, .btn, .sh-actions, .d-print-none { display: none !important; }
-        .main-content { margin-left: 0 !important; padding: 0 !important; }
-        .glass-panel { border: none !important; box-shadow: none !important; }
-        table { border-collapse: collapse !important; width: 100% !important; }
-        th, td { border: 1px solid #ddd !important; padding: 8px !important; }
-        .card { border: 1px solid #ddd !important; color: black !important; background: transparent !important; }
-        .text-white-50 { color: #666 !important; }
-    }
-</style>
+{% endblock %}
 
+{% block extra_js %}
 <script>
     (function($) {
         $("#search-inventory").off("keyup").on("keyup", function() {
             var value = $(this).val().toLowerCase();
             $("#inventory-table tbody tr").filter(function() {
-                if($(this).find('td').length > 1) { // exclude empty message
+                if($(this).find('td').length > 1) {
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
                 }
             });
         });
     })(jQuery);
+
+    function printLaporanInventory() {
+        var rows = '';
+        $('#inventory-table tbody tr:visible').each(function() {
+            var tds = $(this).find('td');
+            if (tds.length <= 1) return;
+            var no        = tds.eq(0).text().trim();
+            var produk    = tds.eq(1).text().replace(/\s+/g, ' ').trim();
+            var merek     = tds.eq(2).text().replace(/\s+/g, ' ').trim();
+            var kondisi   = tds.eq(3).text().trim();
+            var stok      = tds.eq(4).text().trim();
+            var hargaBeli = tds.eq(5).text().trim();
+            var hargaJual = tds.eq(6).text().trim();
+            var stokClass = parseInt(stok) <= 3 ? 'color:#ef4444;font-weight:bold' : 'color:#16a34a;font-weight:bold';
+            rows += '<tr>';
+            rows += '<td class="text-center">' + no + '</td>';
+            rows += '<td>' + produk + '</td>';
+            rows += '<td>' + merek + '</td>';
+            rows += '<td class="text-center">' + kondisi + '</td>';
+            rows += '<td class="text-center" style="' + stokClass + '">' + stok + '</td>';
+            rows += '<td class="text-right">' + hargaBeli + '</td>';
+            rows += '<td class="text-right">' + hargaJual + '</td>';
+            rows += '</tr>';
+        });
+
+        var totalModal   = $('.row.mb-4 .col-md-6:first h3').text().trim();
+        var totalPotensi = $('.row.mb-4 .col-md-6:last h3').text().trim();
+        var now = new Date();
+        var printDate = now.toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'});
+        var printTime = now.toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
+
+        var html = '<!DOCTYPE html><html lang="id"><head>';
+        html += '<meta charset="UTF-8">';
+        html += '<title>Laporan Inventory - DD Shoes POS</title>';
+        html += '<style>';
+        html += '* { margin: 0; padding: 0; box-sizing: border-box; }';
+        html += 'body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; background: #fff; }';
+        html += '.print-wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 20px; }';
+        html += '.kop { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 12px; }';
+        html += '.kop h1 { font-size: 16pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }';
+        html += '.kop h2 { font-size: 12pt; font-weight: normal; margin-top: 4px; }';
+        html += '.kop p { font-size: 9pt; color: #444; margin-top: 4px; }';
+        html += '.info-row { display: flex; justify-content: space-between; margin: 12px 0; font-size: 10pt; }';
+        html += '.summary-box { display: flex; gap: 16px; margin: 14px 0; }';
+        html += '.summary-item { flex: 1; border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 14px; background: #f8fafc; }';
+        html += '.summary-item label { font-size: 9pt; color: #64748b; display: block; margin-bottom: 4px; font-weight: bold; text-transform: uppercase; }';
+        html += '.summary-item .val { font-size: 13pt; font-weight: bold; }';
+        html += '.val-modal { color: #2563eb; }';
+        html += '.val-potensi { color: #16a34a; }';
+        html += 'table { width: 100%; border-collapse: collapse; margin-top: 12px; }';
+        html += 'thead th { background: #1e293b; color: #fff; padding: 7px 9px; text-align: left; font-size: 9.5pt; border: 1px solid #1e293b; }';
+        html += 'thead th.text-center { text-align: center; }';
+        html += 'thead th.text-right { text-align: right; }';
+        html += 'tbody tr:nth-child(even) { background: #f8fafc; }';
+        html += 'tbody td { padding: 6px 9px; border: 1px solid #cbd5e1; font-size: 9.5pt; vertical-align: middle; }';
+        html += 'tbody td.text-center { text-align: center; }';
+        html += 'tbody td.text-right { text-align: right; }';
+        html += '.footer-note { margin-top: 30px; font-size: 9pt; color: #64748b; text-align: right; }';
+        html += '.ttd-area { display: flex; justify-content: flex-end; margin-top: 40px; font-size: 10pt; }';
+        html += '.ttd-box { text-align: center; }';
+        html += '.ttd-line { margin-top: 60px; border-top: 1px solid #000; padding-top: 4px; width: 180px; }';
+        html += '@media print { body { margin: 0; } .print-wrap { padding: 10px; } }';
+        html += '</style></head><body>';
+        html += '<div class="print-wrap">';
+
+        // Kop
+        html += '<div class="kop">';
+        html += '<h1>DD Shoes POS System</h1>';
+        html += '<h2>Laporan Inventory &amp; Nilai Aset</h2>';
+        html += '<p>Jl. [Alamat Toko] &nbsp;|&nbsp; Telp: [No. Telepon]</p>';
+        html += '</div>';
+
+        // Info cetak
+        html += '<div class="info-row">';
+        html += '<div><span><strong>Per Tanggal:</strong> ' + printDate + '</span></div>';
+        html += '<div style="text-align:right"><span>Dicetak pukul: ' + printTime + '</span></div>';
+        html += '</div>';
+
+        // Summary nilai aset
+        html += '<div class="summary-box">';
+        html += '<div class="summary-item"><label>Total Modal (Nilai Beli)</label><span class="val val-modal">' + (totalModal || '-') + '</span></div>';
+        html += '<div class="summary-item"><label>Total Potensi Penjualan (Nilai Jual)</label><span class="val val-potensi">' + (totalPotensi || '-') + '</span></div>';
+        html += '</div>';
+
+        // Tabel
+        html += '<table>';
+        html += '<thead><tr>';
+        html += '<th class="text-center" style="width:4%">No</th>';
+        html += '<th style="width:25%">Nama Produk</th>';
+        html += '<th style="width:18%">Merek / Kategori</th>';
+        html += '<th class="text-center" style="width:10%">Kondisi</th>';
+        html += '<th class="text-center" style="width:8%">Stok</th>';
+        html += '<th class="text-right" style="width:16%">Harga Beli</th>';
+        html += '<th class="text-right" style="width:16%">Harga Jual</th>';
+        html += '</tr></thead>';
+        html += '<tbody>';
+        if (rows === '') {
+            html += '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">Tidak ada data inventory.</td></tr>';
+        } else {
+            html += rows;
+        }
+        html += '</tbody></table>';
+
+        // Tanda tangan
+        html += '<div class="ttd-area">';
+        html += '<div class="ttd-box">';
+        html += '<p>' + printDate + '</p>';
+        html += '<p>Mengetahui,</p>';
+        html += '<div class="ttd-line">( Admin / Pimpinan )</div>';
+        html += '</div></div>';
+
+        html += '<div class="footer-note">* Laporan ini digenerate secara otomatis oleh sistem DD Shoes POS</div>';
+        html += '</div></body></html>';
+
+        var printWin = window.open('', '_blank', 'width=1000,height=700');
+        printWin.document.write(html);
+        printWin.document.close();
+        printWin.focus();
+        setTimeout(function() { printWin.print(); }, 500);
+    }
 </script>
 {% endblock %}

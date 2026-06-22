@@ -27,105 +27,77 @@
 <div class="row g-3 mb-4">
     <!-- Total Stok -->
     <div class="col-sm-6 col-xl-3">
-        <div class="dash-metric-card" style="border-left: 4px solid #8b5cf6;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <p class="dm-label" style="color:#8b5cf6;">TOTAL STOK</p>
-                    <h3 class="dm-value dm-counter" data-target="{{ total_stock }}">0</h3>
-                    <p class="dm-sub">pasang sepatu tersedia</p>
-                </div>
-                <div class="dm-icon" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                    <i class="material-icons">inventory_2</i>
+        <a href="{% url 'products_list' %}" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card" style="border-left: 4px solid #8b5cf6;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="dm-label" style="color:#8b5cf6;">TOTAL JENIS SEPATU</p>
+                        <h3 class="dm-value dm-counter" data-target="{{ total_stock }}">0</h3>
+                        <p class="dm-sub">varian sepatu di katalog</p>
+                    </div>
+                    <div class="dm-icon" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);">
+                        <i class="material-icons">inventory_2</i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
-    <!-- Terjual Hari Ini -->
+    <!-- Terjual -->
     <div class="col-sm-6 col-xl-3">
-        <div class="dash-metric-card" style="border-left: 4px solid #10b981;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <p class="dm-label" style="color:#10b981;">TERJUAL HARI INI</p>
-                    <h3 class="dm-value dm-counter" data-target="{{ total_sold_today }}">0</h3>
-                    <p class="dm-sub">pasang terjual hari ini</p>
-                </div>
-                <div class="dm-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
-                    <i class="material-icons">shopping_cart</i>
+        <a href="{% url 'sales_report' %}" id="link-total-sold" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card" style="border-left: 4px solid #10b981;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="dm-label" style="color:#10b981;" id="label-total-sold">TERJUAL HARI INI</p>
+                        <h3 class="dm-value dm-counter" id="val-total-sold" data-target="{{ total_sold_today }}">0</h3>
+                        <p class="dm-sub">pasang terjual</p>
+                    </div>
+                    <div class="dm-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
+                        <i class="material-icons">shopping_cart</i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Pendapatan -->
     <div class="col-sm-6 col-xl-3">
-        <div class="dash-metric-card" style="border-left: 4px solid #0ea5e9;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <p class="dm-label" style="color:#0ea5e9;">PENDAPATAN HARI INI</p>
-                    <h3 class="dm-value" style="font-size: 1.3rem;">Rp <span class="dm-counter" data-target="{{ revenue_today }}">0</span></h3>
-                    <p class="dm-sub">total transaksi masuk</p>
-                </div>
-                <div class="dm-icon" style="background: linear-gradient(135deg,#0ea5e9,#0284c7);">
-                    <i class="material-icons">account_balance_wallet</i>
+        <a href="{% url 'sales_report' %}" id="link-revenue" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card" style="border-left: 4px solid #0ea5e9;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="dm-label" style="color:#0ea5e9;" id="label-revenue">PENDAPATAN HARI INI</p>
+                        <h3 class="dm-value" style="font-size: 1.3rem;">Rp <span class="dm-counter" id="val-revenue" data-target="{{ revenue_today }}">0</span></h3>
+                        <p class="dm-sub">total transaksi masuk</p>
+                    </div>
+                    <div class="dm-icon" style="background: linear-gradient(135deg,#0ea5e9,#0284c7);">
+                        <i class="material-icons">account_balance_wallet</i>
+                    </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Barang Masuk -->
     <div class="col-sm-6 col-xl-3">
-        <div class="dash-metric-card" style="border-left: 4px solid #f59e0b;">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <p class="dm-label" style="color:#f59e0b;">BARANG MASUK HARI INI</p>
-                    <h3 class="dm-value dm-counter" data-target="{{ total_barang_masuk }}">0</h3>
-                    <p class="dm-sub">total item masuk hari ini</p>
+        <a href="{% url 'stockin_list' %}" id="link-stockin" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card" style="border-left: 4px solid #f59e0b;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="dm-label" style="color:#f59e0b;" id="label-stockin">BARANG MASUK HARI INI</p>
+                        <h3 class="dm-value dm-counter" id="val-stockin" data-target="{{ total_barang_masuk }}">0</h3>
+                        <p class="dm-sub" id="sub-stockin">catatan penerimaan hari ini</p>
+                    </div>
+                    <div class="dm-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
+                        <i class="material-icons">move_to_inbox</i>
+                    </div>
                 </div>
-                <div class="dm-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
-                    <i class="material-icons">move_to_inbox</i>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <a href="javascript:void(0);" hx-get="{% url 'pos_page' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
-            <div class="qa-icon" style="background: linear-gradient(135deg,#6366f1,#8b5cf6);">
-                <i class="material-icons">point_of_sale</i>
-            </div>
-            <div class="qa-content">
-                <h6>Buka Kasir POS</h6>
-                <p>Mulai transaksi penjualan baru</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="javascript:void(0);" hx-get="{% url 'stockin_list' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
-            <div class="qa-icon" style="background: linear-gradient(135deg,#0ea5e9,#3b82f6);">
-                <i class="material-icons">move_to_inbox</i>
-            </div>
-            <div class="qa-content">
-                <h6>Barang Masuk</h6>
-                <p>Catat stok masuk dari supplier</p>
-            </div>
-        </a>
-    </div>
-    <div class="col-md-4">
-        <a href="javascript:void(0);" hx-get="{% url 'sales_report' %}" hx-target="#main-content" hx-push-url="true" class="qa-card">
-            <div class="qa-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
-                <i class="material-icons">bar_chart</i>
-            </div>
-            <div class="qa-content">
-                <h6>Laporan Penjualan</h6>
-                <p>Lihat rekapitulasi penjualan toko</p>
             </div>
         </a>
     </div>
 </div>
+
 
 <!-- Layout Utama Baris 1: Chart -->
 <div class="row g-3 mb-4">
@@ -155,41 +127,38 @@
 <!-- Layout Utama Baris 2: Top Products & Low Stock -->
 <div class="row g-3 mb-4">
     <div class="col-md-7">
-        <!-- 5 Produk Terlaris -->
+        <!-- 5 Brand Terlaris -->
         <div class="glass-panel h-100">
             <div class="panel-head mb-4">
                 <div class="d-flex align-items-center gap-3">
                     <div class="ph-icon" style="background: var(--grad-emerald);"><i class="material-icons">star</i></div>
                     <div class="ph-title">
-                        <h3 class="mb-0">Top 5 Terlaris</h3>
-                        <p class="mb-0">Produk paling banyak dibeli</p>
+                        <h3 class="mb-0">Top 5 Brand Terlaris</h3>
+                        <p class="mb-0">Merek sepatu paling diminati</p>
                     </div>
                 </div>
             </div>
             <div>
-                {% for p in top_products %}
-                <div class="d-flex align-items-center gap-3 mb-3 pb-3" style="border-bottom: 1px dashed #e2e8f0;">
-                    <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
-                        #{{ forloop.counter }}
-                    </div>
-                    <div style="width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #f1f5f9; flex-shrink:0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
-                        {% if p.image %}
-                        <img src="{{ p.image.url }}" alt="Img" style="width: 100%; height: 100%; object-fit: cover;">
-                        {% else %}
-                        <i class="material-icons text-muted" style="line-height: 48px; text-align: center; display: block; font-size:24px;">checkroom</i>
-                        {% endif %}
-                    </div>
-                    <div class="flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <h6 class="mb-0 text-truncate" style="font-size: 0.95rem; font-weight: 700; color:#1e293b; max-width: 200px;">{{ p.name }}</h6>
-                            <span class="fw-bold text-success" style="font-size: 0.85rem;">{{ p.total_sold|default:0 }} terjual</span>
+                {% for b in top_brands %}
+                <a href="{% url 'sales_report' %}?brand_id={{ b.id }}" class="text-decoration-none d-block mb-3 pb-3" style="border-bottom: 1px dashed #e2e8f0; transition: transform 0.2s;">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rank-badge {% if forloop.counter == 1 %}rank-1{% elif forloop.counter == 2 %}rank-2{% elif forloop.counter == 3 %}rank-3{% else %}rank-other{% endif %}">
+                            #{{ forloop.counter }}
                         </div>
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Size {{ p.size }} · {{ p.brand.name }}</small>
-                        <div class="mini-progress">
-                            <div class="mini-progress-bar" style="width: {% widthratio p.total_sold top_products.0.total_sold|default:1 100 %}%;"></div>
+                        <div style="width: 48px; height: 48px; border-radius: 12px; overflow: hidden; background: #f1f5f9; flex-shrink:0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center;">
+                            <i class="material-icons text-muted" style="font-size:28px;">label</i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0 text-truncate" style="font-size: 0.95rem; font-weight: 700; color:#1e293b; max-width: 200px;">{{ b.name }}</h6>
+                                <span class="fw-bold text-success" style="font-size: 0.85rem;">{{ b.total_sold|default:0 }} pasang terjual</span>
+                            </div>
+                            <div class="mini-progress mt-2">
+                                <div class="mini-progress-bar" style="width: {% widthratio b.total_sold top_brands.0.total_sold|default:1 100 %}%;"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </a>
                 {% empty %}
                 <div class="text-center text-muted py-5">
                     <i class="material-icons" style="font-size:48px; opacity:0.3; display:block; margin-bottom:12px;">bar_chart</i>
@@ -200,37 +169,37 @@
         </div>
     </div>
     <div class="col-md-5">
-        <!-- Stok Kritis -->
+        <!-- Dead Stock -->
         <div class="glass-panel h-100">
             <div class="panel-head mb-4">
                 <div class="d-flex align-items-center gap-3">
-                    <div class="ph-icon" style="background: var(--grad-amber);"><i class="material-icons">warning_amber</i></div>
+                    <div class="ph-icon" style="background: var(--grad-amber);"><i class="material-icons">hourglass_empty</i></div>
                     <div class="ph-title">
-                        <h3 class="mb-0">Stok Kritis</h3>
-                        <p class="mb-0">Sisa stok ≤ 3 pasang</p>
+                        <h3 class="mb-0">Barang Lama</h3>
+                        <p class="mb-0">Sepatu paling lama belum laku</p>
                     </div>
                 </div>
             </div>
             <div class="pe-2" style="max-height: 380px; overflow-y: auto;">
-                {% for p in low_stock_products %}
-                <div class="d-flex align-items-center justify-content-between mb-3 py-2 px-3 rounded-3" style="background: rgba(248,250,252,0.8); border: 1px solid rgba(0,0,0,0.03);">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="material-icons text-amber-500" style="font-size: 20px; color: #f59e0b;">error_outline</i>
-                        <div>
-                            <h6 class="mb-0 text-truncate" style="font-size: 0.85rem; font-weight: 700; color: #334155; max-width: 140px;" title="{{ p.name }}">{{ p.name }}</h6>
-                            <small class="text-muted" style="font-size: 0.72rem;">Size {{ p.size }}</small>
+                {% for p in dead_stock %}
+                <a href="{% url 'products_list' %}?search={{ p.name|urlencode }}" class="text-decoration-none d-block mb-3" style="transition: transform 0.2s;">
+                    <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded-3" style="background: rgba(248,250,252,0.8); border: 1px solid rgba(0,0,0,0.03);">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="material-icons text-amber-500" style="font-size: 20px; color: #f59e0b;">inventory_2</i>
+                            <div>
+                                <h6 class="mb-0 text-truncate" style="font-size: 0.85rem; font-weight: 700; color: #334155; max-width: 140px;" title="{{ p.name }}">{{ p.name }}</h6>
+                                <small class="text-muted" style="font-size: 0.72rem;">{{ p.brand.name|default:"-" }} · Size {{ p.size }}</small>
+                            </div>
                         </div>
+                        <span class="badge rounded-pill px-3 py-1" style="background:#fee2e2; color:#dc2626; font-size:0.75rem; font-weight:700;" title="Ditambahkan sejak {{ p.created_at|date:'d M Y' }}">
+                            {{ p.created_at|timesince }}
+                        </span>
                     </div>
-                    {% if p.stock <= 0 %}
-                    <span class="badge rounded-pill px-3 py-1" style="background:#fee2e2; color:#dc2626; font-size:0.75rem; font-weight:700;">Habis</span>
-                    {% else %}
-                    <span class="badge rounded-pill px-3 py-1" style="background:#fef9c3; color:#854d0e; font-size:0.75rem; font-weight:700;">Sisa {{ p.stock }}</span>
-                    {% endif %}
-                </div>
+                </a>
                 {% empty %}
                 <div class="text-center text-muted py-5">
                     <i class="material-icons" style="font-size:48px; color:#10b981; opacity:0.6; display:block; margin-bottom:12px;">check_circle</i>
-                    Semua stok aman!
+                    Gudang bersih dari stok lama!
                 </div>
                 {% endfor %}
             </div>
@@ -254,22 +223,25 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Animate Counters
-        $('.dm-counter').each(function () {
-            $(this).prop('Counter',0).animate({
-                Counter: $(this).data('target')
+        function animateCounter($el, endValue) {
+            $el.prop('Counter', parseInt($el.text().replace(/\./g, '')) || 0).animate({
+                Counter: endValue
             }, {
                 duration: 1200,
                 easing: 'swing',
                 step: function (now) {
-                    // check if revenue (large number)
-                    if ($(this).data('target') > 100000) {
-                        $(this).text(Math.ceil(now).toLocaleString('id-ID'));
+                    if (endValue > 100000) {
+                        $el.text(Math.ceil(now).toLocaleString('id-ID'));
                     } else {
-                        $(this).text(Math.ceil(now));
+                        $el.text(Math.ceil(now));
                     }
                 }
             });
+        }
+
+        // Animate initial Counters
+        $('.dm-counter').each(function () {
+            animateCounter($(this), $(this).data('target'));
         });
 
         // Chart Init
@@ -334,9 +306,7 @@
                             grid: { color: '#f1f5f9', tickLength: 0 },
                             ticks: {
                                 callback: function(value) {
-                                    if (value >= 1000000) return 'Rp ' + (value / 1000000) + 'M';
-                                    if (value >= 1000) return 'Rp ' + (value / 1000) + 'K';
-                                    return 'Rp ' + value;
+                                    return 'Rp ' + value.toLocaleString('id-ID');
                                 }
                             }
                         }
@@ -351,6 +321,36 @@
                 data: { period: period },
                 success: function(res) {
                     initChart(res.labels, res.data);
+                    
+                    // Update dynamic cards
+                    animateCounter($('#val-total-sold'), res.total_sold);
+                    animateCounter($('#val-revenue'), res.total_revenue);
+                    animateCounter($('#val-stockin'), res.total_stockin);
+                    
+                    // Update Labels
+                    let labelMap = {
+                        'daily': ' HARI INI',
+                        'weekly': ' 7 HARI TERAKHIR',
+                        'monthly': ' 30 HARI TERAKHIR'
+                    };
+                    $('#label-total-sold').text('TERJUAL' + labelMap[period]);
+                    $('#label-revenue').text('PENDAPATAN' + labelMap[period]);
+                    $('#label-stockin').text('BARANG MASUK' + labelMap[period]);
+
+                    let subMap = {
+                        'daily': 'hari ini',
+                        'weekly': 'minggu ini',
+                        'monthly': 'bulan ini'
+                    };
+                    $('#sub-stockin').text('catatan penerimaan ' + subMap[period]);
+                    
+                    // Update Links to pass start_date & end_date
+                    let reportUrl = "{% url 'sales_report' %}?start_date=" + res.start_date + "&end_date=" + res.end_date;
+                    $('#link-total-sold').attr('href', reportUrl);
+                    $('#link-revenue').attr('href', reportUrl);
+                    
+                    let stockinUrl = "{% url 'stockin_list' %}?start_date=" + res.start_date + "&end_date=" + res.end_date;
+                    $('#link-stockin').attr('href', stockinUrl);
                 }
             });
         }

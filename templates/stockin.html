@@ -15,8 +15,18 @@
 </div>
 
 <div class="glass-panel">
-    <div class="saas-toolbar mb-3">
-        <div class="st-search" style="position: relative; width: 100%; max-width: 400px;">
+    <div class="saas-toolbar mb-3 d-flex flex-wrap gap-2 justify-content-between">
+        <form method="GET" class="d-flex flex-wrap gap-2 align-items-center">
+            <input type="date" name="start_date" class="form-control saas-input" value="{{ request.GET.start_date }}" required>
+            <span class="text-muted">s/d</span>
+            <input type="date" name="end_date" class="form-control saas-input" value="{{ request.GET.end_date }}" required>
+            <button type="submit" class="btn btn-primary" style="padding: 8px 16px;">Filter</button>
+            {% if request.GET.start_date %}
+            <a href="{% url 'stockin_list' %}" class="btn btn-outline-secondary" style="padding: 8px 16px;">Reset</a>
+            {% endif %}
+        </form>
+
+        <div class="st-search" style="position: relative; width: 100%; max-width: 300px;">
             <i class="material-icons" style="position: absolute; left: 15px; top: 12px; color: #94a3b8;">search</i>
             <input type="text" id="search-stockin" class="form-control saas-input" style="padding-left: 45px;" placeholder="Cari pemasok atau catatan...">
         </div>
@@ -76,6 +86,13 @@
             $("#stockin-table tbody tr").filter(function() {
                 if($(this).find('td').length > 1) { // exclude empty message
                     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                }
+            });
+            // Update visible row numbers
+            var visibleIndex = 1;
+            $("#stockin-table tbody tr").each(function() {
+                if($(this).find('td').length > 1 && $(this).css('display') !== 'none') {
+                    $(this).find('td:eq(0)').text(visibleIndex++);
                 }
             });
         });

@@ -41,7 +41,10 @@ urlpatterns = [
     # Reports & Closing (Admin)
     path('sales-report/', views.sales_report, name='sales_report'),
     path('transactions/<int:pk>/detail/', views.transaction_detail, name='transaction_detail'),
+    path('transactions/<int:pk>/void/', views.transaction_void, name='transaction_void'),
     path('inventory-report/', views.inventory_report, name='inventory_report'),
+    path('adjustment/', views.adjustment_list, name='adjustment_list'),
+    path('adjustment/save/', views.adjustment_save, name='adjustment_save'),
     path('closing-admin/', views.closing_admin, name='closing_admin'),
 
     # POS / Kasir
@@ -51,4 +54,6 @@ urlpatterns = [
     path('catalog-kasir/', views.catalog_kasir, name='catalog_kasir'),
     path('closing-kasir/', views.closing_kasir, name='closing_kasir'),
     path('closing-kasir/submit/', views.closing_submit, name='closing_submit'),
+    path('closing-kasir/unlock/', views.closing_unlock, name='closing_unlock'),
+    path('api/check-closing/', views.check_closing_status, name='check_closing_status'),
 ]
