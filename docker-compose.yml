@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  web:
+    build: .
+    container_name: pos_ddshoes_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - media_volume:/app/media
+      - static_volume:/app/staticfiles
+      - sqlite_volume:/app/db.sqlite3
+    expose:
+      - "8000"
+    networks:
+      - pos_network
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: pos_ddshoes_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - media_volume:/app/media:ro
+      - static_volume:/app/staticfiles:ro
+      - certbot_www:/var/www/certbot:ro
+      - certbot_conf:/etc/letsencrypt:ro
+    depends_on:
+      - web
+    networks:
+      - pos_network
+
+volumes:
+  media_volume:
+  static_volume:
+  sqlite_volume:
+  certbot_www:
+  certbot_conf:
+
+networks:
+  pos_network:
+    driver: bridge

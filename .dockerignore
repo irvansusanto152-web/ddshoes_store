@@ -1,0 +1,40 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+
+# Django
+db.sqlite3
+*.log
+staticfiles/
+
+# Development
+.env
+.env.example
+.vscode/
+.agent/
+
+# Testing
+test_view.py
+check_*.py
+
+# Docs & scripts skripsi
+buat_*.py
+db_dump.txt
+old_dash.html
+pos_ddshoes/docs/
+
+# Docker
+Dockerfile
+docker-compose.yml
+nginx/
