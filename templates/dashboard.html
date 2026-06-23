@@ -27,16 +27,16 @@
 <div class="row g-3 mb-4">
     <!-- Total Stok -->
     <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'products_list' %}" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
-            <div class="dash-metric-card" style="border-left: 4px solid #8b5cf6;">
+        <a href="{% url 'products_list' %}" class="text-decoration-none" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card rounded-4 p-4 border-0" style="background: linear-gradient(135deg, #ff9aeb 0%, #dfb6ff 100%); height: 100%; box-shadow: 0 8px 20px rgba(223, 182, 255, 0.4);">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="dm-label" style="color:#8b5cf6;">TOTAL JENIS SEPATU</p>
-                        <h3 class="dm-value dm-counter" data-target="{{ total_stock }}">0</h3>
-                        <p class="dm-sub">varian sepatu di katalog</p>
+                        <p class="dm-label fw-bold mb-3" style="color: rgba(0,0,0,0.5); font-size: 0.8rem; letter-spacing: 1px;">TOTAL JENIS SEPATU</p>
+                        <h3 class="dm-value dm-counter fw-bolder mb-1" style="color: #1e293b; font-size: 2rem;" data-target="{{ total_stock }}">0</h3>
+                        <p class="dm-sub" style="color: rgba(0,0,0,0.55); font-size: 0.85rem; margin-bottom: 0;">varian sepatu di katalog</p>
                     </div>
-                    <div class="dm-icon" style="background: linear-gradient(135deg,#8b5cf6,#7c3aed);">
-                        <i class="material-icons">inventory_2</i>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #c060f0; color: white; box-shadow: 0 4px 12px rgba(192, 96, 240, 0.4);">
+                        <i class="material-icons" style="font-size: 24px;">inventory_2</i>
                     </div>
                 </div>
             </div>
@@ -45,16 +45,16 @@
 
     <!-- Terjual -->
     <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'sales_report' %}" id="link-total-sold" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
-            <div class="dash-metric-card" style="border-left: 4px solid #10b981;">
+        <a href="{% url 'sales_report' %}" id="link-total-sold" class="text-decoration-none" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card rounded-4 p-4 border-0" style="background: linear-gradient(135deg, #86febb 0%, #90ead7 100%); height: 100%; box-shadow: 0 8px 20px rgba(144, 234, 215, 0.4);">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="dm-label" style="color:#10b981;" id="label-total-sold">TERJUAL HARI INI</p>
-                        <h3 class="dm-value dm-counter" id="val-total-sold" data-target="{{ total_sold_today }}">0</h3>
-                        <p class="dm-sub">pasang terjual</p>
+                        <p class="dm-label fw-bold mb-3" style="color: rgba(0,0,0,0.5); font-size: 0.8rem; letter-spacing: 1px;" id="label-total-sold">TERJUAL HARI INI</p>
+                        <h3 class="dm-value dm-counter fw-bolder mb-1" style="color: #1e293b; font-size: 2rem;" id="val-total-sold" data-target="{{ total_sold_today }}">0</h3>
+                        <p class="dm-sub" style="color: rgba(0,0,0,0.55); font-size: 0.85rem; margin-bottom: 0;">pasang terjual</p>
                     </div>
-                    <div class="dm-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
-                        <i class="material-icons">shopping_cart</i>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #14b8a6; color: white; box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);">
+                        <i class="material-icons" style="font-size: 24px;">shopping_cart</i>
                     </div>
                 </div>
             </div>
@@ -63,16 +63,16 @@
 
     <!-- Pendapatan -->
     <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'sales_report' %}" id="link-revenue" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
-            <div class="dash-metric-card" style="border-left: 4px solid #0ea5e9;">
+        <a href="{% url 'sales_report' %}" id="link-revenue" class="text-decoration-none" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card rounded-4 p-4 border-0" style="background: linear-gradient(135deg, #71e6ff 0%, #9bc5ff 100%); height: 100%; box-shadow: 0 8px 20px rgba(155, 197, 255, 0.4);">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="dm-label" style="color:#0ea5e9;" id="label-revenue">PENDAPATAN HARI INI</p>
-                        <h3 class="dm-value" style="font-size: 1.3rem;">Rp <span class="dm-counter" id="val-revenue" data-target="{{ revenue_today }}">0</span></h3>
-                        <p class="dm-sub">total transaksi masuk</p>
+                        <p class="dm-label fw-bold mb-3" style="color: rgba(0,0,0,0.5); font-size: 0.8rem; letter-spacing: 1px;" id="label-revenue">PENDAPATAN HARI INI</p>
+                        <h3 class="dm-value fw-bolder mb-1" style="color: #1e293b; font-size: 1.5rem;">Rp <span class="dm-counter" id="val-revenue" data-target="{{ revenue_today }}">0</span></h3>
+                        <p class="dm-sub" style="color: rgba(0,0,0,0.55); font-size: 0.85rem; margin-bottom: 0;">total transaksi masuk</p>
                     </div>
-                    <div class="dm-icon" style="background: linear-gradient(135deg,#0ea5e9,#0284c7);">
-                        <i class="material-icons">account_balance_wallet</i>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);">
+                        <i class="material-icons" style="font-size: 24px;">account_balance_wallet</i>
                     </div>
                 </div>
             </div>
@@ -81,16 +81,16 @@
 
     <!-- Barang Masuk -->
     <div class="col-sm-6 col-xl-3">
-        <a href="{% url 'stockin_list' %}" id="link-stockin" class="text-decoration-none text-dark" style="display:block; transition: transform 0.2s;">
-            <div class="dash-metric-card" style="border-left: 4px solid #f59e0b;">
+        <a href="{% url 'stockin_list' %}" id="link-stockin" class="text-decoration-none" style="display:block; transition: transform 0.2s;">
+            <div class="dash-metric-card rounded-4 p-4 border-0" style="background: linear-gradient(135deg, #ffd18a 0%, #ffae8a 100%); height: 100%; box-shadow: 0 8px 20px rgba(255, 174, 138, 0.4);">
                 <div class="d-flex justify-content-between align-items-start">
                     <div>
-                        <p class="dm-label" style="color:#f59e0b;" id="label-stockin">BARANG MASUK HARI INI</p>
-                        <h3 class="dm-value dm-counter" id="val-stockin" data-target="{{ total_barang_masuk }}">0</h3>
-                        <p class="dm-sub" id="sub-stockin">catatan penerimaan hari ini</p>
+                        <p class="dm-label fw-bold mb-3" style="color: rgba(0,0,0,0.5); font-size: 0.8rem; letter-spacing: 1px;" id="label-stockin">BARANG MASUK HARI INI</p>
+                        <h3 class="dm-value dm-counter fw-bolder mb-1" style="color: #ea580c; font-size: 2rem;" id="val-stockin" data-target="{{ total_barang_masuk }}">0</h3>
+                        <p class="dm-sub" id="sub-stockin" style="color: rgba(0,0,0,0.55); font-size: 0.85rem; margin-bottom: 0;">catatan penerimaan hari ini</p>
                     </div>
-                    <div class="dm-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
-                        <i class="material-icons">move_to_inbox</i>
+                    <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; background: #f97316; color: white; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);">
+                        <i class="material-icons" style="font-size: 24px;">move_to_inbox</i>
                     </div>
                 </div>
             </div>
