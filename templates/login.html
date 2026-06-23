@@ -1,30 +1,39 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DD Shoes POS</title>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    
-    <!-- CSS Framework -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <style>
-        /* WRAPPER */
-        body.login-body { font-family:'Inter',sans-serif; overflow:hidden; background:#f8fafc; height:100vh; margin: 0; }
-        .auth-wrapper   { display:flex; height:100%; width:100%; }
-
-        /* SISI KIRI — HERO */
-        .auth-image-side {
-            flex: 1.3; position:relative; background:#0f172a;
-            overflow:hidden; display:flex; flex-direction:column;
-            justify-content:space-between; padding:60px;
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            background: #ffffff;
         }
-        .auth-image-side::before {
+
+        /* --- SISI KIRI --- */
+        .left-side {
+            flex: 1.2;
+            position: relative;
+            background-color: #1e1e24; /* Fallback */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 50px 60px;
+            color: #ffffff;
+        }
+
+        .left-side::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -32,124 +41,289 @@
             background-size: cover;
             background-position: center;
             z-index: 1;
-            animation: imageZoomIn 2s ease-out forwards;
         }
-        .auth-image-side::after {
+
+        .left-side::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(180deg, rgba(15,23,42,0.4) 0%, rgba(15,23,42,0.9) 100%);
+            background: linear-gradient(110deg, rgba(30,41,59,0.95) 0%, rgba(30,41,59,0.4) 100%);
             z-index: 2;
         }
 
-        .auth-image-content { position: relative; z-index: 3; color: white; }
-        .auth-image-footer { position: relative; z-index: 3; }
+        .content-left { position: relative; z-index: 3; }
 
-        @keyframes imageZoomIn {
-            from { transform: scale(1.08); }
-            to { transform: scale(1); }
+        .logo-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.4rem;
+            font-weight: 700;
+        }
+        
+        .logo-icon {
+            color: #818cf8;
+            font-size: 28px;
         }
 
-        /* SISI KANAN — FORM */
-        .auth-form-side { flex:1; background:#fff; display:flex; align-items:center; justify-content:center; padding:40px; }
-        .auth-form-box  { width:100%; max-width:400px; animation:formSlideUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
-
-        @keyframes formSlideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+        .main-text {
+            margin-top: auto;
+            margin-bottom: auto;
+            position: relative;
+            z-index: 3;
+            max-width: 500px;
         }
 
-        /* FORM HEADER */
-        .form-header h2 { font-size:2rem; font-weight:800; color:#0f172a; letter-spacing:-1px; margin-bottom: 8px; }
-        .form-header p  { font-size:1rem; color:#64748b; margin-bottom: 32px; }
-
-        /* INPUT GRUP */
-        .saas-input-group { position:relative; margin-bottom: 20px; }
-        .saas-input-group i { position:absolute; left:16px; top:14px; color:#94a3b8; font-size:20px; }
-        .saas-input {
-            width:100%; padding:14px 16px 14px 48px; height:52px;
-            border:2px solid #e2e8f0; border-radius:14px;
-            font-family:'Inter',sans-serif; font-size:1rem; font-weight:500;
-            background:#f8fafc; transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+        .main-text h1 {
+            font-weight: 800;
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            letter-spacing: -1.5px;
         }
-        .saas-input:focus { border-color:#4f46e5; background:#fff; box-shadow:0 0 0 4px #e0e7ff; outline: none; }
 
-        /* TOMBOL SUBMIT */
-        .btn-masuk {
-            all:unset; display:flex; align-items:center; justify-content:center; gap:8px;
-            background:#4f46e5; color:#fff; padding:14px 20px; border-radius:14px;
-            font-weight:700; font-size:1.05rem; cursor:pointer; width:100%; box-sizing: border-box;
-            box-shadow:0 4px 12px rgba(79,70,229,0.2); transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
-            margin-top: 24px;
+        .main-text p {
+            font-size: 1.1rem;
+            color: #cbd5e1;
+            line-height: 1.6;
         }
-        .btn-masuk:hover { background:#4338ca; transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,70,229,0.35); }
-        .btn-masuk i     { font-size:20px; transition:transform 0.3s ease; }
-        .btn-masuk:hover i { transform:translateX(6px); }
 
-        /* GLASSMORPHISM BADGE (di sisi kiri bawah) */
-        .glass-badge {
-            display:inline-flex; align-items:center; gap:12px;
-            background:rgba(255,255,255,0.1); backdrop-filter:blur(12px);
-            border:1px solid rgba(255,255,255,0.2); padding:12px 20px; border-radius:100px;
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 20px 8px 8px;
+            border-radius: 50px;
+            position: relative;
+            z-index: 3;
+        }
+
+        .avatars {
+            display: flex;
+        }
+        .avatar-circle {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            border: 2px solid #2d2d3a;
+            margin-right: -8px;
+        }
+        .avatar-1 { background-color: #10b981; }
+        .avatar-2 { background-color: #6366f1; }
+        .avatar-3 { background-color: #3b82f6; }
+
+        .status-text {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        /* --- SISI KANAN --- */
+        .right-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            background: #ffffff;
+            position: relative;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .form-header h2 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        .form-header p {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 40px;
+            line-height: 1.5;
+        }
+
+        .input-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .input-group-custom {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .input-group-custom i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 20px;
+            transition: color 0.3s;
+        }
+
+        .form-control-custom {
+            width: 100%;
+            padding: 14px 16px 14px 45px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            color: #334155;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        .form-control-custom::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control-custom:focus {
+            border-color: #5a5ce6;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(90, 92, 230, 0.1);
+        }
+
+        /* Active state handling */
+        .input-group-custom.active i {
+            color: #5a5ce6;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: #5a5ce6;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(90, 92, 230, 0.25);
+        }
+
+        .footer-text {
+            position: absolute;
+            bottom: 30px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 500;
         }
 
         @media (max-width: 992px) {
-            .auth-image-side { display: none; }
+            .left-side { display: none; }
         }
     </style>
 </head>
-<body class="login-body">
-    <div class="auth-wrapper">
-        <!-- Hero Section (Left) -->
-        <div class="auth-image-side">
-            <div class="auth-image-content">
-                <h1 style="font-weight: 800; font-size: 2.5rem; letter-spacing: -1px; margin-bottom: 0;">DD SHOES</h1>
-                <p style="font-weight: 500; letter-spacing: 2px; color: #94a3b8;">POINT OF SALES</p>
-            </div>
-            
-            <div class="auth-image-footer">
-                <div class="glass-badge">
-                    <i class="material-icons" style="color: #4ade80;">security</i>
-                    <span style="color: white; font-weight: 500; font-size: 0.9rem;">Secure Authentication System</span>
-                </div>
-            </div>
+<body>
+
+    <div class="left-side">
+        <div class="content-left logo-wrapper">
+            <i class="material-icons logo-icon">directions_run</i>
+            DD Shoes Store
+        </div>
+        
+        <div class="content-left main-text">
+            <h1>Kelola Penjualan<br>Lebih Cerdas.</h1>
+            <p>Akses seluruh data inventaris, laporan penjualan, dan sistem kasir pintar Anda dalam satu platform yang terintegrasi.</p>
         </div>
 
-        <!-- Form Section (Right) -->
-        <div class="auth-form-side">
-            <div class="auth-form-box">
-                <div class="form-header">
-                    <h2>Selamat Datang</h2>
-                    <p>Silakan masuk ke akun Anda.</p>
+        <div class="content-left">
+            <div class="status-badge">
+                <div class="avatars">
+                    <div class="avatar-circle avatar-1"><i class="material-icons" style="font-size: 16px;">check</i></div>
+                    <div class="avatar-circle avatar-2">R</div>
+                    <div class="avatar-circle avatar-3">M</div>
                 </div>
-                
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 12px; font-size: 0.9rem;">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-
-                <form method="POST" action="{% url 'login' %}">
-                    {% csrf_token %}
-                    <div class="saas-input-group">
-                        <i class="material-icons">person</i>
-                        <input type="text" name="username" class="saas-input" placeholder="Username" required autofocus>
-                    </div>
-                    
-                    <div class="saas-input-group">
-                        <i class="material-icons">lock</i>
-                        <input type="password" name="password" class="saas-input" placeholder="Password" required>
-                    </div>
-                    
-                    <button type="submit" class="btn-masuk">
-                        Masuk <i class="material-icons">arrow_forward</i>
-                    </button>
-                </form>
+                <span class="status-text">Sistem Operasional Aktif</span>
             </div>
         </div>
     </div>
+
+    <div class="right-side">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Selamat Datang</h2>
+                <p>Silakan masukkan kredensial Anda untuk masuk ke sistem POS.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert" style="border-radius: 10px; font-size: 0.9rem;">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" action="{% url 'login' %}">
+                {% csrf_token %}
+                
+                <label class="input-label">Username</label>
+                <div class="input-group-custom">
+                    <i class="material-icons">person_outline</i>
+                    <input type="text" name="username" class="form-control-custom" placeholder="Ketik username Anda" required autofocus>
+                </div>
+                
+                <label class="input-label">Kata Sandi</label>
+                <div class="input-group-custom">
+                    <i class="material-icons">lock_outline</i>
+                    <input type="password" name="password" class="form-control-custom" placeholder="••••••••••••••••" required>
+                </div>
+                
+                <button type="submit" class="btn-submit">
+                    Masuk Sistem <i class="material-icons" style="font-size: 20px;">arrow_forward</i>
+                </button>
+            </form>
+        </div>
+        
+        <div class="footer-text">
+            &copy; DD Shoes Store POS 2026
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Simple script to toggle active icon color based on focus
+        const inputs = document.querySelectorAll('.form-control-custom');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('active');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('active');
+            });
+        });
+    </script>
 </body>
 </html>
