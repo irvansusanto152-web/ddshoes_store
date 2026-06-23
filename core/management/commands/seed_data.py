@@ -9,10 +9,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **kwargs):
         # --- BRANDS ---
-        brands = [
-            'Nike', 'Adidas', 'Vans', 'Converse', 'New Balance',
-            'Puma', 'Reebok', 'Skechers', 'Under Armour', 'Lainnya'
-        ]
+        brands = [f'Brand {i}' for i in range(1, 101)]
         for name in brands:
             obj, created = Brands.objects.get_or_create(name=name)
             if created:
@@ -66,41 +63,19 @@ class Command(BaseCommand):
             self.stdout.write(self.style.WARNING('  kasir01 already exists, skipping.'))
 
         # --- PRODUCTS ---
-        products_data = [
-            {
-                'product_code': 'NK-AF1-01',
-                'name': 'Nike Air Force 1 White',
-                'brand_name': 'Nike',
+        products_data = []
+        for i in range(1, 101):
+            products_data.append({
+                'product_code': f'BR-{i:03d}',
+                'name': f'Sepatu Brand {i} Model A',
+                'brand_name': f'Brand {i}',
                 'category_name': 'Sneakers',
                 'size': '42',
-                'condition': 'Baru',
-                'buy_price': 1000000,
-                'sell_price': 1500000,
-                'stock': 0,
-            },
-            {
-                'product_code': 'AD-UB-01',
-                'name': 'Adidas Ultraboost 21',
-                'brand_name': 'Adidas',
-                'category_name': 'Running',
-                'size': '43',
-                'condition': 'Baru',
-                'buy_price': 1200000,
-                'sell_price': 1800000,
-                'stock': 0,
-            },
-            {
-                'product_code': 'VN-OS-01',
-                'name': 'Vans Old Skool Black White',
-                'brand_name': 'Vans',
-                'category_name': 'Casual',
-                'size': '40',
                 'condition': 'Baru',
                 'buy_price': 500000,
                 'sell_price': 750000,
                 'stock': 0,
-            }
-        ]
+            })
 
         for p_data in products_data:
             brand = Brands.objects.get(name=p_data['brand_name'])
@@ -125,17 +100,17 @@ class Command(BaseCommand):
         admin_user_obj = User.objects.get(username='admin')
         supplier_obj = Suppliers.objects.get(name='Supplier Utama')
 
-        if not StockIns.objects.filter(notes='Initial Seed Stock').exists():
+        if not StockIns.objects.filter(notes='Seed Stock 100 Brands').exists():
             stock_in = StockIns.objects.create(
                 supplier=supplier_obj,
                 received_by=admin_user_obj,
                 received_date=date.today(),
-                notes='Initial Seed Stock'
+                notes='Seed Stock 100 Brands'
             )
             
             for p_data in products_data:
                 prod = Products.objects.get(product_code=p_data['product_code'])
-                qty = 10
+                qty = 1
                 StockInDetails.objects.create(
                     stock_in=stock_in,
                     product=prod,
@@ -145,7 +120,7 @@ class Command(BaseCommand):
                 prod.stock += qty
                 prod.save()
             
-            self.stdout.write(self.style.SUCCESS('  Stock In created with initial quantities (10 each).'))
+            self.stdout.write(self.style.SUCCESS('  Stock In created with initial quantities (1 each).'))
         else:
             self.stdout.write(self.style.WARNING('  Stock In already exists, skipping.'))
 
